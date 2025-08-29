@@ -32,6 +32,5 @@ pm2 start "vllm serve openai-mirror/gpt-oss-20b \
   --max-model-len 4096 \
   --max-num-seqs 16" \
   --name vllm-gpt20b \
-  --interpreter bash \
   --env VLLM_USE_MODELSCOPE=True
 ```
