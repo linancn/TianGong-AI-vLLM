@@ -31,13 +31,7 @@ Serving:
 ```bash
 npm install -g pm2
 
-pm2 start "vllm serve openai-mirror/gpt-oss-20b \
-  --max-model-len 4096 \
-  --max-num-seqs 16 \
-  --name vllm-gpt20b \
-  --env VLLM_USE_MODELSCOPE=True"
-
-pm2 start "vllm serve openai-mirror/gpt-oss-120b --env VLLM_USE_MODELSCOPE=True" --name vllm-gpt120b
+pm2 start gpt-oss-120b.config.json
 
 VLLM_USE_MODELSCOPE=True vllm serve openai-mirror/gpt-oss-20b
 
