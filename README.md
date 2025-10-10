@@ -54,3 +54,9 @@ VLLM_USE_MODELSCOPE=True vllm serve openai-mirror/gpt-oss-120b \
   --max-model-len 4096 \
   --gpu-memory-utilization 0.90
 ```
+
+Test Cuda (optional):
+
+```bash
+watch -n 1 nvidia-smi
+```
