@@ -37,12 +37,20 @@ pm2 start "vllm serve openai-mirror/gpt-oss-20b \
   --name vllm-gpt20b \
   --env VLLM_USE_MODELSCOPE=True"
 
-pm2 start "vllm serve openai-mirror/gpt-oss-120b \
-  --name vllm-gpt120b \
-  --env VLLM_USE_MODELSCOPE=True"
+pm2 start "vllm serve openai-mirror/gpt-oss-120b --env VLLM_USE_MODELSCOPE=True" --name vllm-gpt120b
 
-  vllm serve openai-mirror/gpt-oss-120b \
-    --tensor-parallel-size 2 \
-    --max-model-len 4096 \
-    --gpu-memory-utilization 0.90
+VLLM_USE_MODELSCOPE=True vllm serve openai-mirror/gpt-oss-20b
+
+VLLM_USE_MODELSCOPE=True vllm serve openai-mirror/gpt-oss-120b
+
+VLLM_USE_MODELSCOPE=True vllm serve ZhipuAI/GLM-4.6 \
+  --tensor-parallel-size 2
+
+VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen3-235B-A22B-Instruct-2507 \
+  --tensor-parallel-size 3
+
+VLLM_USE_MODELSCOPE=True vllm serve openai-mirror/gpt-oss-120b \
+  --tensor-parallel-size 2 \
+  --max-model-len 4096 \
+  --gpu-memory-utilization 0.90
 ```
