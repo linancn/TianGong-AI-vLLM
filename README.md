@@ -16,6 +16,9 @@ uv pip install -i https://pypi.tuna.tsinghua.edu.cn/simple vllm --torch-backend=
 uv pip install vllm --torch-backend=auto
 uv pip install modelscope>=1.18.1
 
+uv pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade vllm modelscope --torch-backend=auto
+uv pip install --upgrade vllm modelscope --torch-backend=auto
+
 uv pip freeze > requirements.txt
 ```
 
@@ -30,7 +33,16 @@ npm install -g pm2
 
 pm2 start "vllm serve openai-mirror/gpt-oss-20b \
   --max-model-len 4096 \
-  --max-num-seqs 16" \
+  --max-num-seqs 16 \
   --name vllm-gpt20b \
-  --env VLLM_USE_MODELSCOPE=True
+  --env VLLM_USE_MODELSCOPE=True"
+
+pm2 start "vllm serve openai-mirror/gpt-oss-120b \
+  --name vllm-gpt120b \
+  --env VLLM_USE_MODELSCOPE=True"
+
+  vllm serve openai-mirror/gpt-oss-120b \
+    --tensor-parallel-size 2 \
+    --max-model-len 4096 \
+    --gpu-memory-utilization 0.90
 ```
