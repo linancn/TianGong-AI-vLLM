@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "name": "vllm-qwen-2.5vl-72b",
+      "script": "/bin/bash",
+      "args": [
+        "-lc",
+        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True python -m vllm.entrypoints.openai.api_server --model Qwen/Qwen2.5-VL-72B-Instruct-AWQ --max-model-len 16384"
+      ],
+      "interpreter": "none",
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "2"
+      },
+      "autorestart": true,
+      "watch": false,
+      "error_file": "./logs/vllm-qwen-2.5vl-72b-error.log",
+      "out_file": "./logs/vllm-qwen-2.5vl-72b-out.log",
+      "merge_logs": true,
+      "time": true
+    }
+  ]
+}

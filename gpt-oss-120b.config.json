@@ -9,12 +9,12 @@
       ],
       "interpreter": "none",
       "env": {
-        "CUDA_VISIBLE_DEVICES": "2"
+        "CUDA_VISIBLE_DEVICES": "1"
       },
       "autorestart": true,
       "watch": false,
-      "error_file": "./logs/vllm-error.log",
-      "out_file": "./logs/vllm-out.log",
+      "error_file": "./logs/vllm-gpt120b-error.log",
+      "out_file": "./logs/vllm-gpt120b-out.log",
       "merge_logs": true,
       "time": true
     }
