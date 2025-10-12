@@ -5,7 +5,7 @@
       "script": "/bin/bash",
       "args": [
         "-lc",
-        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True python -m vllm.entrypoints.openai.api_server --model openai-mirror/gpt-oss-120b"
+        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True python -m vllm.entrypoints.openai.api_server --model openai-mirror/gpt-oss-120b  --port 8001"
       ],
       "interpreter": "none",
       "env": {

@@ -37,9 +37,9 @@ pm2 start qwen-2.5vl-72b.config.json
 
 VLLM_USE_MODELSCOPE=True vllm serve openai-mirror/gpt-oss-20b
 
-VLLM_USE_MODELSCOPE=True vllm serve openai-mirror/gpt-oss-120b
+VLLM_USE_MODELSCOPE=True vllm serve openai-mirror/gpt-oss-120b --port 8001
 
-VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen2.5-VL-72B-Instruct-AWQ --max-model-len 16384
+VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen2.5-VL-72B-Instruct-AWQ --max-model-len 16384 --port 8002
 
 VLLM_USE_MODELSCOPE=True vllm serve ZhipuAI/GLM-4.6 \
   --tensor-parallel-size 2
