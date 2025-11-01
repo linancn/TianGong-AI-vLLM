@@ -35,6 +35,8 @@ pm2 start gpt-oss-120b.config.json
 pm2 start qwen-2.5vl-72b.config.json
 pm2 start qwen-3vl-30b.config.json
 
+pm2 start qwen-3-embedding-0.6b.config.json
+
 
 VLLM_USE_MODELSCOPE=True vllm serve openai-mirror/gpt-oss-20b
 
@@ -54,6 +56,9 @@ VLLM_USE_MODELSCOPE=True vllm serve openai-mirror/gpt-oss-120b \
   --tensor-parallel-size 2 \
   --max-model-len 4096 \
   --gpu-memory-utilization 0.90
+
+CUDA_VISIBLE_DEVICES=0 VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen3-Embedding-0.6B --port 8004 \
+  --gpu-memory-utilization 0.24
 ```
 
 Test Cuda (optional):
