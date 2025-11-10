@@ -14,7 +14,7 @@ source .venv/bin/activate
 
 uv pip install -i https://pypi.tuna.tsinghua.edu.cn/simple vllm --torch-backend=auto
 uv pip install vllm --torch-backend=auto
-uv pip install modelscope>=1.18.1
+uv pip install modelscope>=1.31.0
 
 uv pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade vllm modelscope --torch-backend=auto
 uv pip install --upgrade vllm modelscope --torch-backend=auto
