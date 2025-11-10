@@ -46,6 +46,8 @@ VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen2.5-VL-72B-Instruct-AWQ --max-model
 
 VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen3-VL-30B-A3B-Instruct --max-model-len 16384 --port 8002
 
+VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen3-VL-32B-Instruct --max-model-len 16384 --port 8002
+
 VLLM_USE_MODELSCOPE=True vllm serve ZhipuAI/GLM-4.6 \
   --tensor-parallel-size 2
 
