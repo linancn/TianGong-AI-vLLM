@@ -5,7 +5,7 @@
       "script": "/bin/bash",
       "args": [
         "-lc",
-        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True python -m vllm.entrypoints.openai.api_server --model Qwen/Qwen3-VL-30B-A3B-Instruct --max-model-len 16384 --port 8002"
+        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True python -m vllm.entrypoints.openai.api_server --model Qwen/Qwen3-VL-30B-A3B-Instruct --max-model-len 32768 --port 8002"
       ],
       "interpreter": "none",
       "env": {
