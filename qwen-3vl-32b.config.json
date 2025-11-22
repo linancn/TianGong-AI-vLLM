@@ -5,7 +5,7 @@
       "script": "/bin/bash",
       "args": [
         "-lc",
-        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen3-VL-32B-Instruct --max-model-len 16384 --port 8005"
+        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen3-VL-32B-Instruct --max-model-len 32768 --port 8005"
       ],
       "interpreter": "none",
       "env": {

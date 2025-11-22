@@ -5,11 +5,11 @@
       "script": "/bin/bash",
       "args": [
         "-lc",
-        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen3-Embedding-0.6B --port 8004 --gpu-memory-utilization 0.24"
+        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen3-Embedding-0.6B --port 8004 --gpu-memory-utilization 0.10"
       ],
       "interpreter": "none",
       "env": {
-        "CUDA_VISIBLE_DEVICES": "0"
+        "CUDA_VISIBLE_DEVICES": "3"
       },
       "autorestart": true,
       "watch": false,

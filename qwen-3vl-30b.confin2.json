@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "name": "vllm-qwen-3vl-30b2",
+      "script": "/bin/bash",
+      "args": [
+        "-lc",
+        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True python -m vllm.entrypoints.openai.api_server --model Qwen/Qwen3-VL-30B-A3B-Instruct --max-model-len 16384 --port 8006"
+      ],
+      "interpreter": "none",
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "3"
+      },
+      "autorestart": true,
+      "watch": false,
+      "error_file": "./logs/vllm-qwen-3vl-30b2-error.log",
+      "out_file": "./logs/vllm-qwen-3vl-30b2-out.log",
+      "merge_logs": true,
+      "time": true
+    }
+  ]
+}

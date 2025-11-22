@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "name": "vllm-gpt120b2",
+      "script": "/bin/bash",
+      "args": [
+        "-lc",
+        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True python -m vllm.entrypoints.openai.api_server --model openai-mirror/gpt-oss-120b  --port 8011"
+      ],
+      "interpreter": "none",
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "0"
+      },
+      "autorestart": true,
+      "watch": false,
+      "error_file": "./logs/vllm-gpt120b2-error.log",
+      "out_file": "./logs/vllm-gpt120b2-out.log",
+      "merge_logs": true,
+      "time": true
+    }
+  ]
+}

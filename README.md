@@ -32,10 +32,14 @@ Serving:
 npm install -g pm2
 
 pm2 start gpt-oss-120b.config.json
+pm2 start gpt-oss-120b.config2.json
+pm2 start gpt-oss-120b.config3.json
 
 pm2 start qwen-2.5vl-72b.config.json
 pm2 start qwen-3vl-30b.config.json
 pm2 start qwen-3vl-32b.config.json
+pm2 start qwen-3vl-30b.confin2.json
+pm2 start qwen-3vl-30b.config3.json
 
 pm2 start qwen-3-embedding-0.6b.config.json
 
