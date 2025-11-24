@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "name": "vllm-qwen-3vl-32b-gguf",
+      "script": "/bin/bash",
+      "args": [
+        "-lc",
+        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen3-VL-32B-Instruct-GGUF --max-model-len 32768 --port 8005"
+      ],
+      "interpreter": "none",
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "3"
+      },
+      "autorestart": true,
+      "watch": false,
+      "error_file": "./logs/vllm-qwen-3vl-32b-gguf-error.log",
+      "out_file": "./logs/vllm-qwen-3vl-32b-gguf-out.log",
+      "merge_logs": true,
+      "time": true
+    }
+  ]
+}
