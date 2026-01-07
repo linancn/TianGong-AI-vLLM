@@ -8,7 +8,7 @@ dependencies = [
 	"modelscope>=1.32.0",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = ["black>=24.0.0"]
 
 [tool.uv.pip]
