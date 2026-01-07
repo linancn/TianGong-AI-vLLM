@@ -1,0 +1,23 @@
+{
+  "apps": [
+    {
+      "name": "vllm-hy-mt15-1.8b",
+      "script": "/bin/bash",
+      "args": [
+        "-lc",
+        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True python -m vllm.entrypoints.openai.api_server --model Tencent-Hunyuan/HY-MT1.5-1.8B --max-num-seqs 32 --port 8005 --gpu-memory-utilization 0.27"
+      ],
+      "interpreter": "none",
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "2",
+        "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
+      },
+      "autorestart": true,
+      "watch": false,
+      "error_file": "./logs/vllm-hy-mt15-1.8b-error.log",
+      "out_file": "./logs/vllm-hy-mt15-1.8b-out.log",
+      "merge_logs": true,
+      "time": true
+    }
+  ]
+}

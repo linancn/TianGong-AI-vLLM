@@ -5,11 +5,11 @@
       "script": "/bin/bash",
       "args": [
         "-lc",
-        "source .venv/bin/activate && python -m vllm.entrypoints.openai.api_server --model tencent/HY-MT1.5-7B-FP8 --quantization compressed-tensors --max-model-len 8192 --port 8005"
+        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True python -m vllm.entrypoints.openai.api_server --model Tencent-Hunyuan/HY-MT1.5-7B-FP8 --max-num-seqs 32 --port 8005 --gpu-memory-utilization 0.27"
       ],
       "interpreter": "none",
       "env": {
-        "CUDA_VISIBLE_DEVICES": "0"
+        "CUDA_VISIBLE_DEVICES": "2"
       },
       "autorestart": true,
       "watch": false,
