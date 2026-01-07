@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "name": "vllm-hy-mt15-7b-fp8",
+      "script": "/bin/bash",
+      "args": [
+        "-lc",
+        "source .venv/bin/activate && python -m vllm.entrypoints.openai.api_server --model tencent/HY-MT1.5-7B-FP8 --quantization compressed-tensors --max-model-len 8192 --port 8005"
+      ],
+      "interpreter": "none",
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "0"
+      },
+      "autorestart": true,
+      "watch": false,
+      "error_file": "./logs/vllm-hy-mt15-7b-fp8-error.log",
+      "out_file": "./logs/vllm-hy-mt15-7b-fp8-out.log",
+      "merge_logs": true,
+      "time": true
+    }
+  ]
+}
