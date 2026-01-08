@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "name": "tiangonglca-embedding-0.6b",
+      "script": "/bin/bash",
+      "args": [
+        "-lc",
+        "source .venv/bin/activate && vllm serve BIaoo/lca-qwen3-embedding --port 8006"
+      ],
+      "interpreter": "none",
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "3"
+      },
+      "autorestart": true,
+      "watch": false,
+      "error_file": "./logs/vllm-tiangonglca-embedding-0.6b-error.log",
+      "out_file": "./logs/vllm-tiangonglca-embedding-0.6b-out.log",
+      "merge_logs": true,
+      "time": true
+    }
+  ]
+}

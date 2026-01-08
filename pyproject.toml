@@ -1,8 +1,18 @@
 [tool.black]
 line-length = 100
-exclude = '''
-(
-	^/\.venv/
-	| ^/weaviate/weaviate_data/
-)
-'''
+
+[project]
+name = "tiangong-ai-vllm"
+version = "0.1.0"
+description = "TianGong AI vLLM serving presets"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+	"vllm",
+	"modelscope",
+]
+
+[dependency-groups]
+dev = [
+	"black",
+]
