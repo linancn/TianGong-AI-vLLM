@@ -5,11 +5,11 @@
       "script": "/bin/bash",
       "args": [
         "-lc",
-        "source .venv/bin/activate && vllm serve BIaoo/lca-qwen3-embedding --port 8006"
+        "source .venv/bin/activate && python -m vllm.entrypoints.openai.api_server --model BIaoo/lca-qwen3-embedding --port 8006 --data-parallel-size 4"
       ],
       "interpreter": "none",
       "env": {
-        "CUDA_VISIBLE_DEVICES": "3"
+        "CUDA_VISIBLE_DEVICES": "0,1,2,3"
       },
       "autorestart": true,
       "watch": false,
