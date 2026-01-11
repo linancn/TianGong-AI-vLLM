@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "name": "vllm-lca-qwen3-embedding-0.6b",
+      "script": "/bin/bash",
+      "args": [
+        "-lc",
+        "source .venv/bin/activate && vllm serve BIaoo/lca-qwen3-embedding --port 8010 --gpu-memory-utilization 0.24"
+      ],
+      "interpreter": "none",
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "0"
+      },
+      "autorestart": true,
+      "watch": false,
+      "error_file": "./logs/vllm-lca-qwen3-embedding-0.6b-error.log",
+      "out_file": "./logs/vllm-lca-qwen3-embedding-0.6b-out.log",
+      "merge_logs": true,
+      "time": true
+    }
+  ]
+}
