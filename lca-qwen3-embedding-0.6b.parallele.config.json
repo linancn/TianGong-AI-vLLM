@@ -5,11 +5,11 @@
       "script": "/bin/bash",
       "args": [
         "-lc",
-        "source .venv/bin/activate && vllm serve BIaoo/lca-qwen3-embedding --port 7710"
+        "source .venv/bin/activate && vllm serve BIaoo/lca-qwen3-embedding --api-key YOUR_API_KEY --data-parallel-size 4 --port 7710"
       ],
       "interpreter": "none",
       "env": {
-        "CUDA_VISIBLE_DEVICES": "0"
+        "CUDA_VISIBLE_DEVICES": "0,1,2,3"
       },
       "autorestart": true,
       "watch": false,
