@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "name": "vllm-mininax-m2.1",
+      "script": "/bin/bash",
+      "args": [
+        "-lc",
+        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True vllm serve MiniMax/MiniMax-M2.1 --trust-remote-code --data-parallel-size 4 --enable-auto-tool-choice --tool-call-parser minimax_m2 --reasoning-parser minimax_m2_append_think --port 7720"
+      ],
+      "interpreter": "none",
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "0,1,2,3"
+      },
+      "autorestart": true,
+      "watch": false,
+      "error_file": "./logs/vllm-mininax-m2.1-error.log",
+      "out_file": "./logs/vllm-mininax-m2.1-out.log",
+      "merge_logs": true,
+      "time": true
+    }
+  ]
+}
