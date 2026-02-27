@@ -44,6 +44,15 @@ uv run black .
   uv pip install --upgrade vllm modelscope
   ```
 
+6) Blackwell（CUDA 13）推荐安装 vLLM nightly（Qwen3.5 官方配方）：  
+```bash
+source .venv/bin/activate
+uv pip install -U vllm --torch-backend=auto --extra-index-url https://wheels.vllm.ai/nightly
+```
+
+> 说明：`vllm/vllm-openai:cu130-nightly` 是 Docker 镜像标签，不是 `uv pip --extra-index-url` 可用的索引地址。  
+> 如果走 Docker（Blackwell 推荐镜像）：`vllm/vllm-openai:cu130-nightly`。
+
 > 镜像配置已写入 `pyproject.toml`：`tool.uv.pip.index-url` 指向清华，`tool.uv.index` 将清华设为默认索引，并保留 PyPI 作为备用源。
 
 ## 按命令切换/覆盖镜像源
@@ -73,6 +82,7 @@ pm2 start gpt-oss-120b.config.json
 pm2 start qwen-2.5vl-72b.config.json
 pm2 start qwen-3vl-30b.config.json
 pm2 start qwen-3vl-32b.config.json
+pm2 start qwen-3.5-122b-a10b-fp8.config.json
 pm2 start qwen-3-embedding-0.6b.config.json
 
 pm2 save
