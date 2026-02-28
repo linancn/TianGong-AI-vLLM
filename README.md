@@ -48,6 +48,7 @@ uv run black .
 ```bash
 source .venv/bin/activate
 uv pip install -U vllm --torch-backend=auto --extra-index-url https://wheels.vllm.ai/nightly
+uv pip install modelscope
 ```
 
 > 说明：`vllm/vllm-openai:cu130-nightly` 是 Docker 镜像标签，不是 `uv pip --extra-index-url` 可用的索引地址。  
