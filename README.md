@@ -26,6 +26,7 @@ source .venv/bin/activate
 3) 安装项目依赖（使用清华镜像，PyPI 回退）：  
 ```bash
 uv sync 
+uv sync --upgrade
 ```
 
 4) 开发工具（Black）：  
