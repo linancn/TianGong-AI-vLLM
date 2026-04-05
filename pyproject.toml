@@ -2,27 +2,33 @@
 name = "tiangong-ai-vllm-serve"
 version = "0.1.0"
 description = "vLLM serving utilities and configs for TianGong models."
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.14"
 dependencies = [
-	"vllm>=0.12.0",
+	"vllm>=0.19.0",
+	"torch",
+	"torchaudio",
+	"torchvision",
 	"modelscope>=1.32.0",
 ]
 
 [dependency-groups]
 dev = ["black>=24.0.0"]
 
-[tool.uv.pip]
-index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-extra-index-url = ["https://pypi.org/simple"]
-
-[[tool.uv.index]]
-name = "tsinghua"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-default = true
+[tool.uv.sources]
+# Keep the PyTorch family on the official CUDA 13 wheels.
+torch = { index = "pytorch-cu130" }
+torchaudio = { index = "pytorch-cu130" }
+torchvision = { index = "pytorch-cu130" }
 
 [[tool.uv.index]]
 name = "pypi"
 url = "https://pypi.org/simple"
+default = true
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
 
 [tool.black]
 line-length = 100
