@@ -9,6 +9,9 @@ dependencies = [
 	"torchaudio",
 	"torchvision",
 	"modelscope>=1.32.0",
+	"fastapi>=0.135.3",
+	"httpx>=0.28.1",
+	"uvicorn>=0.44.0",
 ]
 
 [dependency-groups]

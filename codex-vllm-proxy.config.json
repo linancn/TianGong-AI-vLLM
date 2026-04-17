@@ -1,0 +1,19 @@
+{
+  "apps": [
+    {
+      "name": "codex-vllm-proxy-qwen-3.5-397b",
+      "script": "/bin/bash",
+      "args": [
+        "-lc",
+        "source .venv/bin/activate && python scripts/codex_vllm_proxy.py --upstream http://127.0.0.1:7730 --port 7740"
+      ],
+      "interpreter": "none",
+      "autorestart": true,
+      "watch": false,
+      "error_file": "./logs/codex-vllm-proxy-error.log",
+      "out_file": "./logs/codex-vllm-proxy-out.log",
+      "merge_logs": true,
+      "time": true
+    }
+  ]
+}
