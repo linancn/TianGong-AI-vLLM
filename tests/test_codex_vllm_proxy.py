@@ -17,12 +17,64 @@ SPEC.loader.exec_module(proxy)
 
 
 class FakeUpstreamResponse:
-    def __init__(self, lines: list[str]) -> None:
+    def __init__(
+        self,
+        lines: list[str],
+        *,
+        status_code: int = 200,
+        headers: dict[str, str] | None = None,
+        body: bytes | None = None,
+    ) -> None:
         self._lines = lines
+        self.status_code = status_code
+        self.headers = headers or {"content-type": "text/event-stream"}
+        self._body = body or b""
+        self.closed = False
 
     async def aiter_lines(self):
         for line in self._lines:
             yield line
+
+    async def aclose(self) -> None:
+        self.closed = True
+
+    async def aread(self) -> bytes:
+        return self._body
+
+
+class FakeJSONResponse:
+    def __init__(self, payload: dict, *, status_code: int = 200) -> None:
+        self._payload = payload
+        self.status_code = status_code
+        self.text = json.dumps(payload, ensure_ascii=False)
+        self.content = self.text.encode("utf-8")
+
+    def json(self) -> dict:
+        return self._payload
+
+
+class FakeAsyncClient:
+    def __init__(
+        self,
+        *,
+        post_responses: list[FakeJSONResponse] | None = None,
+        send_responses: list[FakeUpstreamResponse] | None = None,
+    ) -> None:
+        self.post_responses = list(post_responses or [])
+        self.send_responses = list(send_responses or [])
+        self.post_calls: list[dict] = []
+        self.send_calls: list[dict] = []
+
+    async def post(self, path: str, json: dict | None = None, headers: dict | None = None):
+        self.post_calls.append({"path": path, "json": json, "headers": headers})
+        return self.post_responses.pop(0)
+
+    def build_request(self, method: str, path: str, json: dict | None = None, headers: dict | None = None):
+        return {"method": method, "path": path, "json": json, "headers": headers}
+
+    async def send(self, request: dict, stream: bool = False):
+        self.send_calls.append({"request": request, "stream": stream})
+        return self.send_responses.pop(0)
 
 
 class CodexVllmProxyTests(unittest.TestCase):
@@ -227,6 +279,12 @@ class CodexVllmProxyTests(unittest.TestCase):
             ],
         )
 
+    def test_premature_final_detection_matches_transition_sentences(self) -> None:
+        self.assertTrue(proxy._looks_like_premature_final_answer(""))
+        self.assertTrue(proxy._looks_like_premature_final_answer("现在让我对比一下本地文件系统和数据库中的迁移，看看是否有未应用的："))
+        self.assertTrue(proxy._looks_like_premature_final_answer("Let me check that."))
+        self.assertFalse(proxy._looks_like_premature_final_answer("已经确认没有未应用的迁移。"))
+
     def test_convert_chat_completion_response_stores_history(self) -> None:
         request_data = {"model": "Qwen/test", "stream": False}
         chat_request = {"model": "Qwen/test", "messages": [{"role": "user", "content": "hello"}]}
@@ -317,6 +375,71 @@ class CodexVllmProxyTests(unittest.TestCase):
         self.assertEqual(response_obj.output[0].type, "reasoning")
         self.assertEqual(response_obj.output[0].status, "incomplete")
         self.assertEqual(proxy.conversation_history[response_obj.id], chat_request["messages"])
+
+    def test_translate_nonstream_auto_continues_probable_premature_final(self) -> None:
+        request_data = {"model": "Qwen/test", "stream": False}
+        chat_request = {"model": "Qwen/test", "messages": [{"role": "user", "content": "check migrations"}]}
+        client = FakeAsyncClient(
+            post_responses=[
+                FakeJSONResponse(
+                    {
+                        "model": "Qwen/test",
+                        "choices": [
+                            {
+                                "finish_reason": "stop",
+                                "message": {
+                                    "role": "assistant",
+                                    "content": "现在让我对比一下本地文件系统和数据库中的迁移，看看是否有未应用的：",
+                                },
+                            }
+                        ],
+                        "usage": {"prompt_tokens": 2, "completion_tokens": 3, "total_tokens": 5},
+                    }
+                ),
+                FakeJSONResponse(
+                    {
+                        "model": "Qwen/test",
+                        "choices": [
+                            {
+                                "finish_reason": "stop",
+                                "message": {
+                                    "role": "assistant",
+                                    "content": "已经确认没有未应用的迁移。",
+                                },
+                            }
+                        ],
+                        "usage": {"prompt_tokens": 4, "completion_tokens": 5, "total_tokens": 9},
+                    }
+                ),
+            ]
+        )
+
+        response_obj = asyncio.run(
+            proxy.translate_nonstream_chat_completion_response(
+                client,
+                request_data,
+                chat_request,
+                headers={"authorization": "Bearer local-demo"},
+                settings=self.settings,
+            )
+        )
+
+        self.assertEqual(len(client.post_calls), 2)
+        self.assertEqual(client.post_calls[1]["json"]["messages"][-1]["role"], "user")
+        self.assertEqual(client.post_calls[1]["json"]["messages"][-1]["content"], proxy.AUTO_CONTINUE_PROMPT)
+        self.assertEqual(response_obj.status, "completed")
+        self.assertEqual(len(response_obj.output), 2)
+        self.assertEqual(response_obj.output[0].phase, "commentary")
+        self.assertEqual(
+            response_obj.output[0].content[0].text,
+            "现在让我对比一下本地文件系统和数据库中的迁移，看看是否有未应用的：",
+        )
+        self.assertEqual(response_obj.output[1].phase, "final_answer")
+        self.assertEqual(response_obj.output[1].content[0].text, "已经确认没有未应用的迁移。")
+        self.assertEqual(response_obj.usage.total_tokens, 14)
+        stored_messages = proxy.conversation_history[response_obj.id]
+        self.assertEqual(stored_messages[-2]["content"], "现在让我对比一下本地文件系统和数据库中的迁移，看看是否有未应用的：")
+        self.assertEqual(stored_messages[-1]["content"], "已经确认没有未应用的迁移。")
 
     def test_stream_text_response_emits_official_message_events(self) -> None:
         request_data = {"model": "Qwen/test", "stream": True}
@@ -439,18 +562,65 @@ class CodexVllmProxyTests(unittest.TestCase):
         self.assertNotIn("response.completed", [event["type"] for event in events])
         self.assertEqual(proxy.conversation_history[events[-1]["response"]["id"]], chat_request["messages"])
 
+    def test_stream_auto_continues_probable_premature_final(self) -> None:
+        request_data = {"model": "Qwen/test", "stream": True}
+        chat_request = {"model": "Qwen/test", "messages": [{"role": "user", "content": "check migrations"}]}
+        upstream_response = FakeUpstreamResponse(
+            [
+                'data: {"model":"Qwen/test","choices":[{"delta":{"content":"现在让我对比一下本地文件系统和数据库中的迁移，看看是否有未应用的："},"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":3,"total_tokens":5}}',
+            ]
+        )
+        client = FakeAsyncClient(
+            send_responses=[
+                FakeUpstreamResponse(
+                    [
+                        'data: {"model":"Qwen/test","choices":[{"delta":{"content":"已经确认没有未应用的迁移。"},"finish_reason":"stop"}],"usage":{"prompt_tokens":4,"completion_tokens":5,"total_tokens":9}}',
+                    ]
+                )
+            ]
+        )
+
+        events = asyncio.run(
+            self._collect_stream_events(
+                upstream_response,
+                request_data,
+                chat_request,
+                client=client,
+            )
+        )
+
+        self.assertEqual(len(client.send_calls), 1)
+        self.assertTrue(client.send_calls[0]["stream"])
+        self.assertEqual(client.send_calls[0]["request"]["json"]["messages"][-1]["content"], proxy.AUTO_CONTINUE_PROMPT)
+        completed = events[-1]["response"]
+        self.assertEqual(completed["status"], "completed")
+        self.assertEqual(len(completed["output"]), 2)
+        self.assertEqual(completed["output"][0]["phase"], "commentary")
+        self.assertEqual(completed["output"][0]["content"][0]["text"], "现在让我对比一下本地文件系统和数据库中的迁移，看看是否有未应用的：")
+        self.assertEqual(completed["output"][1]["phase"], "final_answer")
+        self.assertEqual(completed["output"][1]["content"][0]["text"], "已经确认没有未应用的迁移。")
+        self.assertNotEqual(completed["output"][0]["id"], completed["output"][1]["id"])
+        self.assertEqual(completed["usage"]["total_tokens"], 14)
+        stored_messages = proxy.conversation_history[completed["id"]]
+        self.assertEqual(stored_messages[-2]["content"], "现在让我对比一下本地文件系统和数据库中的迁移，看看是否有未应用的：")
+        self.assertEqual(stored_messages[-1]["content"], "已经确认没有未应用的迁移。")
+
     async def _collect_stream_events(
         self,
         upstream_response: FakeUpstreamResponse,
         request_data: dict,
         chat_request: dict,
+        *,
+        client: FakeAsyncClient | None = None,
     ) -> list[dict]:
         events: list[dict] = []
         async for chunk in proxy.stream_chat_completion_response(
+            client or FakeAsyncClient(),
             upstream_response,
             request_data,
             chat_request,
             self.settings,
+            {},
         ):
             self.assertTrue(chunk.startswith("data: "))
             events.append(json.loads(chunk[6:].strip()))
