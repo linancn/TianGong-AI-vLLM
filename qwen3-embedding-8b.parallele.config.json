@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "name": "vllm-qwen3-embedding-8b",
+      "script": "/bin/bash",
+      "args": [
+        "-lc",
+        "source .venv/bin/activate && VLLM_USE_MODELSCOPE=True vllm serve Qwen/Qwen3-Embedding-8B --data-parallel-size 4 --port 7710"
+      ],
+      "interpreter": "none",
+      "env": {
+        "CUDA_VISIBLE_DEVICES": "0,1,2,3"
+      },
+      "autorestart": true,
+      "watch": false,
+      "error_file": "./logs/vllm-qwen3-embedding-8b-error.log",
+      "out_file": "./logs/vllm-qwen3-embedding-8b-out.log",
+      "merge_logs": true,
+      "time": true
+    }
+  ]
+}
