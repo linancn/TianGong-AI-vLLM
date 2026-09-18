@@ -1,0 +1,7 @@
+**
+!deploy/
+!deploy/vllm/
+!deploy/vllm/Dockerfile
+!deploy/vllm/serve.sh
+!deploy/vllm/patches/
+!deploy/vllm/patches/apply_runtime_fixes.py

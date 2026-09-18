@@ -1,0 +1,47 @@
+# VS Code REST Client: default requests need no API key.
+# If VLLM_API_KEY is configured, add Authorization: Bearer <key> to each request.
+@baseUrl = http://127.0.0.1:7730
+@model = nv-community/Qwen3.8-Flash-Next-NVFP4
+
+### Model identity
+GET {{baseUrl}}/v1/models
+
+### Chat
+POST {{baseUrl}}/v1/chat/completions
+Content-Type: application/json
+
+{
+  "model": "{{model}}",
+  "messages": [{"role": "user", "content": "用一句话解释张量并行。"}],
+  "max_tokens": 256,
+  "chat_template_kwargs": {"enable_thinking": false}
+}
+
+### Streaming
+POST {{baseUrl}}/v1/chat/completions
+Content-Type: application/json
+
+{
+  "model": "{{model}}",
+  "messages": [{"role": "user", "content": "你好"}],
+  "max_tokens": 256,
+  "stream": true,
+  "chat_template_kwargs": {"enable_thinking": false}
+}
+
+### Tool selection (the client executes the returned call)
+POST {{baseUrl}}/v1/chat/completions
+Content-Type: application/json
+
+{
+  "model": "{{model}}",
+  "messages": [{"role": "user", "content": "Call get_weather for Beijing."}],
+  "max_tokens": 256,
+  "chat_template_kwargs": {"enable_thinking": false},
+  "tools": [{"type": "function", "function": {
+    "name": "get_weather",
+    "description": "Get weather for a city",
+    "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}
+  }}],
+  "tool_choice": "auto"
+}

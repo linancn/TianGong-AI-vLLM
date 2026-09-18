@@ -1,0 +1,74 @@
+name: tiangong-vllm
+services:
+  model:
+    image: ${VLLM_IMAGE:?Set VLLM_IMAGE in .env}
+    build:
+      context: .
+      dockerfile: deploy/vllm/Dockerfile
+    restart: unless-stopped
+    init: true
+    shm_size: 16gb
+    stop_grace_period: 120s
+    ports:
+      - "${VLLM_HOST:-127.0.0.1}:${VLLM_PORT:-7730}:8000"
+    environment:
+      VLLM_API_KEY: ${VLLM_API_KEY:-}
+      HF_HUB_OFFLINE: "1"
+      OMP_NUM_THREADS: "8"
+      SPECULATIVE_CONFIG: ${SPECULATIVE_CONFIG:-}
+      VLLM_ALLREDUCE_USE_FLASHINFER_PCIE_IPC: ${VLLM_ALLREDUCE_USE_FLASHINFER_PCIE_IPC:-0}
+    volumes:
+      - ${MODEL_DIR:-./models/Qwen3.8-Flash-Next-NVFP4}:/model:ro
+      - vllm-cache:/root/.cache
+    entrypoint: ["/bin/bash", "/opt/tiangong/serve.sh"]
+    command:
+      - /model
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --served-model-name
+      - ${SERVED_MODEL_NAME:-nv-community/Qwen3.8-Flash-Next-NVFP4}
+      - --tensor-parallel-size
+      - ${TENSOR_PARALLEL_SIZE:-4}
+      - --enable-expert-parallel
+      - --enable-flashinfer-autotune
+      - --distributed-executor-backend
+      - mp
+      - --engram-config
+      - '{"cpu_offload":false}'
+      - --quantization
+      - modelopt
+      - --gpu-memory-utilization
+      - ${GPU_MEMORY_UTILIZATION:-0.85}
+      - --max-model-len
+      - ${MAX_MODEL_LEN:-65536}
+      - --max-num-seqs
+      - ${MAX_NUM_SEQS:-16}
+      - --max-num-batched-tokens
+      - ${MAX_NUM_BATCHED_TOKENS:-8192}
+      - --enable-prefix-caching
+      - --reasoning-parser
+      - qwen3
+      - --enable-auto-tool-choice
+      - --tool-call-parser
+      - qwen3_coder
+      - --limit-mm-per-prompt
+      - '{"image":4,"video":0}'
+    devices:
+      - nvidia.com/gpu=${GPU_0:-0}
+      - nvidia.com/gpu=${GPU_1:-1}
+      - nvidia.com/gpu=${GPU_2:-2}
+      - nvidia.com/gpu=${GPU_3:-3}
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30m
+    logging:
+      driver: json-file
+      options: {max-size: "20m", max-file: "3"}
+
+volumes:
+  vllm-cache:
