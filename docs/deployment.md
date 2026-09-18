@@ -63,6 +63,8 @@ chmod 600 .env
 ```
 
 
+从另一台机器复制模型和镜像时，按[跨机迁移](host-migration.md)校验，并使用 `start-loaded` 启动已导入镜像；需要重建容器时用 `restart-loaded`，避免隐式下载或构建。
+
 ## 维护、停止、恢复
 
 1. 停止新增请求，查看模型 `/metrics` 的 `vllm:num_requests_running`、`vllm:num_requests_waiting`，等待归零。

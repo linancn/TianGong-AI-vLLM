@@ -10,7 +10,7 @@
 - 根目录文档仅 README.md、AGENTS.md；专题在 docs，部署在 deploy，运维辅助在 scripts，调用示例在 examples。
 - 文档使用相对文件路径；命令以仓库根目录为工作目录。不要写机器专属路径、凭证或逐轮操作流水账；历史部署由 Git 追溯。
 - `.env`、模型、下载中间文件、日志和验收证据保持私有。公开模板为 `.env.example`；镜像摘要、模型修订和校验和可纳入 Git。
-- 统一入口 `deploy/manage.sh`。start 不重建已有容器，配置变更使用 restart；GPU 使用 Docker 原生 CDI 与官方 toolkit-base；保留 FlashInfer 自动调优，相关故障须排查修复；本地镜像修复由 Dockerfile 和上游文件 SHA256 固定，详见 docs/runtime-patches.md；Docker `unless-stopped` 负责恢复，不再由 PM2 启动 vLLM。
+- 统一入口 `deploy/manage.sh`。start 不重建已有容器，配置变更使用 restart；跨机导入已核验镜像使用 start-loaded/restart-loaded（禁止隐式构建/拉取），迁移流程见 docs/host-migration.md；GPU 使用 Docker 原生 CDI 与官方 toolkit-base；保留 FlashInfer 自动调优，相关故障须排查修复；本地镜像修复由 Dockerfile 和上游文件 SHA256 固定，详见 docs/runtime-patches.md；Docker `unless-stopped` 负责恢复，不再由 PM2 启动 vLLM。
 - 禁止在宿主 `.venv` 安装 vLLM/Torch/CUDA。`pyproject.toml` 和 `uv.lock` 仅管理开发工具。不得用旧 Qwen3.5 模板覆盖新模型自带模板。
 - 模型固定清单在 `deploy/vllm/model-manifest.json`。下载逐文件 SHA256 校验；模型挂载只读，编译缓存独立卷。更新模型须重新生成并审查清单、镜像兼容性和真实验收。
 - 停止、清理只针对本项目。先查在途请求和服务归属，不使用全局 PM2 删除、Docker prune 或共享缓存清空。常规 stop 保留模型、缓存和证据。
@@ -34,5 +34,6 @@
 - API key 默认未配置／为空，业务请求无需鉴权；非空 `VLLM_API_KEY` 启用 Bearer 鉴权，验收脚本按配置检查对应行为；健康检查不等于可推理。不要把 Compose 展开配置或 `.env` 内容写入日志、对话、Git。
 - 发布前执行 `uv run --group dev black --check scripts tests deploy/vllm/patches`、`uv run --group dev ruff check scripts tests deploy/vllm/patches`、`uv run --group dev pytest`、`bash -n deploy/manage.sh deploy/vllm/serve.sh`、`deploy/manage.sh config`。
 - 真实验收执行 `deploy/manage.sh check`。失败必须报告，不能仅凭 health 返回 200 宣称部署完成。
+- PCIe IPC / FlashInfer 0.7.0rc3 候选实验已按用户要求暂停，方案记录在 docs/performance-tuning.md；用户明确恢复前不执行升级或开启该通信后端。
 - 性能复验用 scripts/benchmark.py；MTP 与通信优化须核对实际 backend、草稿接受率和功能验收，当前镜像不提供 PCIe IPC 接口，保持对应开关为 0。
 - 质量与性能测量只描述实际样本和配置；短请求、纯色图片测试不代表长上下文、复杂图表质量或并发容量。

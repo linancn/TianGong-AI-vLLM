@@ -54,6 +54,7 @@ cp -n .env.example .env
 | 文档 | 内容 |
 | --- | --- |
 | [部署与恢复](docs/deployment.md) | 配置、下载、启动、停止、故障恢复 |
+| [跨机迁移](docs/host-migration.md) | Git 更新、局域网复制模型/镜像、校验、切换与回滚 |
 | [架构](docs/architecture.md) | 模型服务边界、目录和生命周期 |
 | [AI 接入](docs/ai-integration.md) | API、鉴权、模型名、推理和多轮限制 |
 | [调优](docs/performance-tuning.md) | 上下文、并发、GPU 和验证边界 |

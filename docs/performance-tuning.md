@@ -41,6 +41,22 @@ MTP 3 相对基线提升约 **99% / 49% / 63%**。接受率按整个 benchmark�
 
 **量化与容量：维持当前配置。** 当前显存充足，未为节约显存另行降低 KV 精度，也未启用 CPU PLE offload。更长上下文、DP2/TP2 或更高并发需要独立业务样本验证；不要把 B200 的测量直接套到 RTX PRO 6000。
 
+## 后续实验待办（已暂停）
+
+用户决定先记录、不执行 PCIe IPC 升级实验；当前继续使用已验证的 MTP 3 + NCCL，自动调优保持开启。仅在用户明确恢复此项工作后再构建或部署候选版本。
+
+已核实 [FlashInfer v0.7.0rc3 源码](https://github.com/flashinfer-ai/flashinfer/blob/v0.7.0rc3/flashinfer/comm/__init__.py)提供 `PcieIpcAllReduceWorkspace`，并存在 [PyPI 预发布包](https://pypi.org/project/flashinfer-python/0.7.0rc3/)。当前固定的 0.6.18.post1 没有该接口；这只是已验证镜像的版本边界，不代表硬件没有优化空间。
+
+恢复后的顺序：
+
+1. 在独立候选 Docker 镜像中固定预发布包及配套依赖，核对 CUDA/SM120、vLLM 与接口签名兼容性。
+2. 重新审查自动调优补丁。现有补丁固定上游文件 SHA256，不能把旧补丁不加检查地应用到新库。
+3. 验证四卡 P2P、all-reduce 数值、CUDA Graph、缓存与带缓存重启；确认日志显示真实 IPC 后端，而非回退 NCCL。
+4. 与当前 MTP 3 + NCCL 做同口径 A/B，比较单路、四路及业务并发下的 TTFT、端到端吞吐和正确性。
+5. 只有确有收益且验收通过，才更新默认镜像、配置和文档；不预先承诺提升百分比。
+
+官方接口说明强调，[支持某个 shape 不等于更快](https://docs.flashinfer.ai/api/comm.html#pcie-ipc-allreduce)，仍须根据实际 PCIe 拓扑调优。当前不升级运行库、不修改通信开关。
+
 ## 调整与复验
 
 1. 确认无在途请求，保存当前配置、镜像、模型清单和证据。

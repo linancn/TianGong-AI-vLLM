@@ -15,7 +15,9 @@ case "$group" in
 esac
 case "$action" in
   start) "${compose[@]}" up -d --build --no-recreate "${services[@]}" ;;
+  start-loaded) "${compose[@]}" up -d --no-build --pull never --no-recreate "${services[@]}" ;;
   restart) "${compose[@]}" up -d --build --force-recreate "${services[@]}" ;;
+  restart-loaded) "${compose[@]}" up -d --no-build --pull never --force-recreate "${services[@]}" ;;
   stop) "${compose[@]}" stop "${services[@]}" ;;
   status) "${compose[@]}" ps -a "${services[@]}" ;;
   logs) "${compose[@]}" logs --tail 100 -f "${services[@]}" ;;
@@ -25,5 +27,5 @@ case "$action" in
   check) python3 scripts/smoke_test.py ;;
   download) python3 scripts/download_model.py ;;
   verify) python3 scripts/download_model.py --verify-only ;;
-  *) echo "Usage: $0 {start|restart|stop|status|logs|pull|build|config|check|download|verify} [model|all]" >&2; exit 2 ;;
+  *) echo "Usage: $0 {start|start-loaded|restart|restart-loaded|stop|status|logs|pull|build|config|check|download|verify} [model|all]" >&2; exit 2 ;;
 esac
