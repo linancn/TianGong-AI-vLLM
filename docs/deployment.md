@@ -36,7 +36,7 @@ chmod 600 .env
 | `VLLM_API_KEY` | 空／未配置：关闭鉴权；非空：启用 Bearer |
 | `GPU_0..GPU_3` / `TENSOR_PARALLEL_SIZE` | GPU 0/1/2/3，TP4 + EP4 |
 | `GPU_MEMORY_UTILIZATION` | 0.85；是每张卡的引擎预算 |
-| `MAX_MODEL_LEN` | 65536；请求输入与输出合计上限 |
+| `MAX_MODEL_LEN` | 262144；请求输入与输出合计上限 |
 | `MAX_NUM_SEQS` / `MAX_NUM_BATCHED_TOKENS` | 16 / 8192 |
 | `SPECULATIVE_CONFIG` | 模板为 `{"method":"mtp","num_speculative_tokens":3}`；空值关闭 MTP |
 | `VLLM_ALLREDUCE_USE_FLASHINFER_PCIE_IPC` | 默认 0；当前 FlashInfer 缺少 IPC 接口，设置 1 仍会回退 NCCL |

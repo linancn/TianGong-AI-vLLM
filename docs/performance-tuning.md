@@ -2,12 +2,14 @@
 
 ## 当前默认
 
-四卡 TP4 + EP4，GPU 引擎预算 0.85，上下文 65536，并发序列上限 16，每轮批处理 token 预算 8192。每请求最多四图、禁用视频。使用原模型混合量化 metadata：主模型 NVFP4 专家层、FP8 PLE 和 FP8 MTP，不改权重。
+四卡 TP4 + EP4，GPU 引擎预算 0.85，上下文 262144（256K，输入与输出合计），并发序列上限 16，每轮批处理 token 预算 8192。每请求最多四图、禁用视频。使用原模型混合量化 metadata：主模型 NVFP4 专家层、FP8 PLE 和 FP8 MTP，不改权重。
 
 - `--engram-config '{"cpu_offload":false}'`：PLE 随 TP 分片驻留 GPU，利用充足显存避免默认 CPU lookup。
 - `--enable-flashinfer-autotune`：明确保留调优；分布式缓存命中与持久化修复见[运行时修复](runtime-patches.md)。
 - `SPECULATIVE_CONFIG={"method":"mtp","num_speculative_tokens":3}`：基于下述测试选用三 token MTP；清空可关闭，改为 1 可使用单 token 草稿。
 - 通信使用 NCCL。`VLLM_ALLREDUCE_USE_FLASHINFER_PCIE_IPC=0` 保持默认。
+
+模型原生 `max_position_embeddings=262144`，当前不启用 YaRN。256K 为单请求上限，`MAX_NUM_SEQS=16` 不保证 16 个满长请求可同时驻留；容量取决于启动时分配的 KV cache。以下性能数据仍对应 65536 上下文配置。
 
 ## 2026-09-18 实测
 

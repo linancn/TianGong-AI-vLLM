@@ -42,7 +42,7 @@ services:
       - --gpu-memory-utilization
       - ${GPU_MEMORY_UTILIZATION:-0.85}
       - --max-model-len
-      - ${MAX_MODEL_LEN:-65536}
+      - ${MAX_MODEL_LEN:-262144}
       - --max-num-seqs
       - ${MAX_NUM_SEQS:-16}
       - --max-num-batched-tokens

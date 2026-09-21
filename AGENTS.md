@@ -1,6 +1,6 @@
 # TianGong AI vLLM Serve 协作说明
 
-本仓库部署 ModelScope `nv-community/Qwen3.8-Flash-Next-NVFP4`，推理引擎只在 Docker 内运行。默认 TP4 + EP4、GPU PLE、FlashInfer 自动调优、MTP 3 与 NCCL；API key 默认空且可配置。架构与资料组织参考 `unstructure-serve`，本项目只保留模型服务，不引入应用代理或文档解析队列。
+本仓库部署 ModelScope `nv-community/Qwen3.8-Flash-Next-NVFP4`，推理引擎只在 Docker 内运行。默认 262144 token（256K）上下文、TP4 + EP4、GPU PLE、FlashInfer 自动调优、MTP 3 与 NCCL；API key 默认空且可配置。架构与资料组织参考 `unstructure-serve`，本项目只保留模型服务，不引入应用代理或文档解析队列。
 
 ## 文档与修改约定
 
