@@ -36,7 +36,7 @@
 
 两台同为四卡 Blackwell 的主机共享 `blackwell-6000x4` 公共拓扑；各自当前运行的模型、端口、GPU 占用和请求峰值放在私有 instance。GPU 计算利用率为 0% 不表示已占用的显存可以分给新模型，99% 也不能单独说明服务是否达到业务性能目标。
 
-三卡 Blackwell 的 MinerU 由 Unstructure Serve 原有 `model`/`app` 三卡入口管理，两个仓库各自负责模型与验证，不复制 MinerU 镜像到本仓库。该现场的 Snap Docker 缺少 CDI；`embed3` 使用私有 `output/instances/embed3.compose.yaml` legacy GPU 覆盖，公开 CDI Compose 尚未在其上原样验收。Qwen 不列入该机器的模板：固定模型的 `linear_num_key_heads=16`、`linear_num_value_heads=48`，当前 vLLM 的 GDN 状态维度为 `128×16×2 + 128×48 = 10240`，TP3 会触发整除检查。依据：[固定模型配置](https://www.modelscope.cn/models/nv-community/Qwen3.8-Flash-Next-NVFP4/resolve/bb325e902fbb183287fcf009deba45d59abeb079/config.json)、[固定 vLLM 的 GDN 分片](https://github.com/vllm-project/vllm/blob/dee37d89115db4c94a820a79a78a7828e141c910/vllm/models/qwen4_exp/nvidia/model.py#L759-L779)。
+三卡 Blackwell 的 MinerU 由 Unstructure Serve 原有 `model`/`app` 三卡入口管理，两个仓库各自负责模型与验证，不复制 MinerU 镜像到本仓库。该现场的 Snap Docker 已生成 CDI 规格，但当前 daemon 未扫描其目录；`embed3` 使用私有 `output/instances/embed3.compose.yaml` legacy GPU 覆盖，公开 CDI Compose 尚未在其上原样验收。Qwen 不列入该机器的模板：固定模型的 `linear_num_key_heads=16`、`linear_num_value_heads=48`，当前 vLLM 的 GDN 状态维度为 `128×16×2 + 128×48 = 10240`，TP3 会触发整除检查。依据：[固定模型配置](https://www.modelscope.cn/models/nv-community/Qwen3.8-Flash-Next-NVFP4/resolve/bb325e902fbb183287fcf009deba45d59abeb079/config.json)、[固定 vLLM 的 GDN 分片](https://github.com/vllm-project/vllm/blob/dee37d89115db4c94a820a79a78a7828e141c910/vllm/models/qwen4_exp/nvidia/model.py#L759-L779)。
 
 未来若需在单卡或双卡机器运行 Embed，应增加单独的 DP1/DP2 拓扑 profile，并记录实际加载、真实请求、峰值显存与质量验收。若新 LLM 需要不同镜像、量化、chat template、tokenizer、解析器或 API 检查，应增加新的模型／运行时 profile，不能复用旧模型名伪装兼容。
 

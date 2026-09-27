@@ -2,7 +2,7 @@
 
 ## 隔离边界
 
-Qwen 使用 `deploy/vllm/compose.yaml` 指定的本地构建 Docker 镜像；Embed 的 `deploy/manage.sh pull embed` 从固定摘要拉取上游镜像，再赋予 `deploy/embed/compose.yaml` 使用的本地标签。CUDA、Torch、vLLM、Transformers 及推理内核全部留在各自镜像内。宿主仅依赖 NVIDIA 驱动、Container Toolkit base 1.20.0、支持 CDI 的 Docker 28.3+ / Compose 2.24.4+、Python 3.12+ 与 curl。
+Qwen 使用 `deploy/vllm/compose.yaml` 指定的本地构建 Docker 镜像；Embed 的 `deploy/manage.sh pull embed` 从固定摘要拉取上游镜像，再赋予 `deploy/embed/compose.yaml` 使用的本地标签。CUDA、Torch、vLLM、Transformers 及推理内核全部留在各自镜像内。宿主依赖 NVIDIA 驱动、支持 CDI 的 Docker 28.3+ / Compose 2.24.4+、Python 3.12+ 与 curl；apt Docker 使用 Container Toolkit base 1.20.0，Snap Docker 自带 NVIDIA 工具链且须核对 daemon 的 CDI 规格搜索目录，见[部署说明](deployment.md)。
 
 `pyproject.toml` 无应用运行依赖；`uv.lock` 固定 Black、Ruff、pytest 等开发工具。标准库脚本可以直接 `python3` 执行。不要向宿主环境重新添加 Torch 或 vLLM，不修改系统 Python。
 

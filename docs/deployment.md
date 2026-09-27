@@ -8,7 +8,7 @@ Qwen 模板使用四张 Blackwell GPU、TP=4 + EP=4。NVFP4、Qwen4Exp 架构和
 
 Embed 四卡模板为 DP4/TP1；三卡模板为 DP3/TP1，已在三张 RTX PRO 6000 Blackwell 上与 Unstructure Serve 的 MinerU DP3 完成短时联合试跑。每张卡装载一个 Nemotron-3-Embed-8B-BF16 副本。`deploy/embed/` 提供四卡 Compose 和固定模型清单，`deploy/embed3/` 提供三卡 Compose；两者共用同一固定 vLLM 0.25 镜像及模型清单。该现场 MinerU 为 4.0.5/vLLM 0.21，与四卡 Ada 的版本组合不同。每张选定 GPU 均须能容纳 BF16 权重、运行时与业务请求的峰值显存；不能仅根据权重文件大小判断可运行。模型标称最大序列长度 32768，两种模板先限制到 4096，升高上限须重新做容量与质量验收。来源：[NVIDIA 模型说明](https://huggingface.co/nvidia/Nemotron-3-Embed-8B-BF16/blob/main/README.md)。
 
-公开 Compose 模板使用 Docker 原生 CDI 设备映射。支持 CDI 的 Docker 安装 NVIDIA 官方 `nvidia-container-toolkit-base` 即可，不需要配置 legacy runtime 或重启 Docker。按 [NVIDIA 安装说明](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)配置官方软件源后执行：
+公开 Compose 模板使用 Docker 原生 CDI 设备映射。对于从 apt 安装的 Docker，安装 NVIDIA 官方 `nvidia-container-toolkit-base` 即可生成 CDI 规格，不需要配置 legacy runtime 或重启 Docker。按 [NVIDIA 安装说明](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)配置官方软件源后执行：
 
 ```bash
 sudo apt-get install -y nvidia-container-toolkit-base=1.20.0-1
@@ -18,7 +18,9 @@ systemctl is-enabled nvidia-cdi-refresh.service nvidia-cdi-refresh.path
 
 刷新服务为 oneshot，成功退出后显示 inactive 正常；`.path` 与开机启动负责自动刷新。驱动变化后设备列表不正确时执行 `sudo systemctl restart nvidia-cdi-refresh.service`，不要重启 Docker。
 
-三卡 Blackwell 现场使用的 Snap Docker 缺少 CDI，实际以私有 legacy NVIDIA GPU Compose 覆盖启动。该覆盖保存在被忽略的 `output/instances/embed3.compose.yaml`；存在时统一入口为 `embed3` 附加覆盖，其他部署仍使用公开 CDI 配置。现场的真实请求与联合负载结果不能证明公开 CDI 模板在 Snap Docker 上可原样启动。迁移到新宿主时须重新核对 Docker GPU 运行时及该私有覆盖的适用性，不把它提交为通用模板。
+Snap Docker 自带 NVIDIA 工具链，也会生成 CDI 规格；三卡现场的规格文件位于 `/var/snap/docker/current/etc/cdi/nvidia.yaml`，但其 Docker daemon 当前只扫描 `/etc/cdi` 与 `/var/run/cdi`。因此现场实际以私有 legacy NVIDIA GPU Compose 覆盖启动。该覆盖保存在被忽略的 `output/instances/embed3.compose.yaml`；存在时统一入口为 `embed3` 附加覆盖。现场的真实请求与联合负载结果不能证明公开 CDI 模板在该 Snap Docker 上可原样启动。依据：[Canonical Docker Snap 的 NVIDIA 支持与 daemon 配置](https://github.com/canonical/docker-snap)、[Docker 原生 CDI 目录配置](https://docs.docker.com/reference/cli/dockerd/#configure-cdi-devices)、[NVIDIA CDI 规格说明](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html)。
+
+要在 Snap Docker 上试用公开 CDI Compose，可先核对 `docker info` 的 CDI spec directories 与 Snap 生成的规格文件。若 daemon 未扫描该目录，无需直接更换 Docker 安装方式：在整机维护窗口备份 `/var/snap/docker/current/config/daemon.json`，保留其现有设置，并将 `cdi-spec-dirs` 设为包含 `/etc/cdi`、`/var/run/cdi` 和 `/var/snap/docker/current/etc/cdi`。验证 JSON 后重启 Snap Docker daemon，再用 `docker info` 核对目录，并以临时 GPU 容器和本项目真实请求验收公开 Compose。当前三卡现场的 Docker 未启用 live restore，daemon 重启会中断同一引擎下的其他容器；应先与这些服务的负责人安排维护窗口，不在本项目常规部署时操作共享 daemon。完成原生 CDI 验收后，才能移除私有 legacy 覆盖。迁移到新宿主时仍须重新核对 GPU 运行时及该覆盖的适用性。
 
 检查 `nvidia-smi`、`docker compose version`、`/dev/nvidia-uvm`，并确认所用端口与 GPU 的归属。Qwen 模型文件总量约 132.7 GB，Embed 约 15.9 GB；额外预留下载、容器镜像和编译缓存空间。默认下载目录均位于本仓库：`models/Qwen3.8-Flash-Next-NVFP4/` 与 `models/Nemotron-3-Embed-8B-BF16/`。目录由下载命令创建，权重文件被 Git 忽略；三卡和四卡 Embed 共用同一份 Nemotron 权重。
 

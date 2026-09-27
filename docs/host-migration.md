@@ -101,4 +101,4 @@ sha256sum output/transfer/embed-docker.tar > output/transfer/embed-image.sha256
 ./deploy/manage.sh check embed3
 ```
 
-三卡 RTX PRO 6000 Blackwell 与 Unstructure Serve 的 MinerU DP3 已完成有限联合试跑，样本边界见[验证](validation.md)。该宿主的 Snap Docker 缺少 CDI，现场使用被忽略的 `output/instances/embed3.compose.yaml` 私有 legacy NVIDIA GPU 覆盖；统一入口在该文件存在时为 `embed3` 附加覆盖，默认仍为公开 CDI Compose。迁移时须核对新宿主的 GPU 运行时，不复制旧宿主的私有覆盖作为通用配置。每台新部署机仍需发起代表性共同负载，记录显存峰值、错误和延迟；四卡 Ada 或三卡 Blackwell 的短时结果均不能代替新主机验收。两种 Embed 在同一主机上互斥，迁移或回滚只操作明确选中的项目。
+三卡 RTX PRO 6000 Blackwell 与 Unstructure Serve 的 MinerU DP3 已完成有限联合试跑，样本边界见[验证](validation.md)。该宿主的 Snap Docker 已生成 CDI 规格，但当前 daemon 未扫描其目录；现场使用被忽略的 `output/instances/embed3.compose.yaml` 私有 legacy NVIDIA GPU 覆盖，统一入口在该文件存在时为 `embed3` 附加覆盖，默认仍为公开 CDI Compose。迁移时须核对新宿主的 GPU 运行时，不复制旧宿主的私有覆盖作为通用配置。每台新部署机仍需发起代表性共同负载，记录显存峰值、错误和延迟；四卡 Ada 或三卡 Blackwell 的短时结果均不能代替新主机验收。两种 Embed 在同一主机上互斥，迁移或回滚只操作明确选中的项目。
