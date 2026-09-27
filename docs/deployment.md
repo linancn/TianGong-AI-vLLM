@@ -6,7 +6,7 @@
 
 Qwen 模板使用四张 Blackwell GPU、TP=4 + EP=4。NVFP4、Qwen4Exp 架构和 FP8 PLE 混合量化均要求镜像支持，不能任意替换为老版本。模型卡要求至少包含 vLLM 提交 `d4d703caf908786416585ceb1f369e2e0363358b`；固定镜像已包含混合量化 MTP 修复，模板默认使用 MTP 3，实测依据见[性能调优](performance-tuning.md)。来源：[Qwen 模型卡](https://modelscope.cn/models/nv-community/Qwen3.8-Flash-Next-NVFP4)。
 
-Embed 四卡模板为 DP4/TP1；三卡模板为 DP3/TP1，已在三张 RTX PRO 6000 Blackwell 上与 Unstructure Serve 的 MinerU DP3 完成短时联合试跑。每张卡装载一个 Nemotron-3-Embed-8B-BF16 副本。`deploy/embed/` 提供四卡 Compose 和固定模型清单，`deploy/embed3/` 提供三卡 Compose；两者共用同一固定 vLLM 0.25 镜像及模型清单。该现场 MinerU 为 4.0.5/vLLM 0.21，与四卡 Ada 的版本组合不同。每张选定 GPU 均须能容纳 BF16 权重、运行时与业务请求的峰值显存；不能仅根据权重文件大小判断可运行。模型标称最大序列长度 32768，两种模板先限制到 4096，升高上限须重新做容量与质量验收。来源：[NVIDIA 模型说明](https://huggingface.co/nvidia/Nemotron-3-Embed-8B-BF16/blob/main/README.md)。
+Embed 四卡模板为 DP4/TP1；三卡模板为 DP3/TP1，已在三张 RTX PRO 6000 Blackwell 上与 Unstructure Serve 的 MinerU DP3 完成短时联合试跑。每张卡装载一个 Nemotron-3-Embed-8B-BF16 副本。`deploy/embed/` 提供四卡 Compose 和固定模型清单，`deploy/embed3/` 提供三卡 Compose；两者共用同一固定 vLLM 0.25 镜像及模型清单。旧联合样本的 MinerU 为 4.0.5/vLLM 0.21；该现场现已更新至 MinerU 4.0.7/vLLM 0.28、每 rank 固定 3 GiB KV，并完成单独请求及另一组短时联合请求验收。每张选定 GPU 均须能容纳 BF16 权重、运行时与业务请求的峰值显存；不能仅根据权重文件大小判断可运行。模型标称最大序列长度 32768，两种模板先限制到 4096，升高上限须重新做容量与质量验收。来源：[NVIDIA 模型说明](https://huggingface.co/nvidia/Nemotron-3-Embed-8B-BF16/blob/main/README.md)。
 
 公开 Compose 模板使用 Docker 原生 CDI 设备映射。对于从 apt 安装的 Docker，安装 NVIDIA 官方 `nvidia-container-toolkit-base` 即可生成 CDI 规格，不需要配置 legacy runtime 或重启 Docker。按 [NVIDIA 安装说明](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)配置官方软件源后执行：
 
@@ -117,7 +117,7 @@ Qwen 与 Embed 的利用率参数在当前服务中的作用不同。Qwen 是生
 ./deploy/manage.sh check embed3
 ```
 
-`download/verify embed3` 仍使用 `deploy/embed/model-manifest.json`，`pull embed3` 使用与四卡相同的固定 vLLM 0.25 摘要，默认标记同一可迁移镜像。三卡项目为 `tiangong-embed3`，默认本机端口 7732，缓存卷独立。启动 `embed3` 前须停止同一主机上的 `embed`；管理脚本会拒绝两种 Embed 服务同时运行。三卡 Blackwell 现场已通过 `check embed3` 的真实向量验收，以及与旧版 MinerU DP3 的有限联合负载试跑；样本与限制见[验证](validation.md)。
+`download/verify embed3` 仍使用 `deploy/embed/model-manifest.json`，`pull embed3` 使用与四卡相同的固定 vLLM 0.25 摘要，默认标记同一可迁移镜像。三卡项目为 `tiangong-embed3`，默认本机端口 7732，缓存卷独立。启动 `embed3` 前须停止同一主机上的 `embed`；管理脚本会拒绝两种 Embed 服务同时运行。三卡 Blackwell 现场已通过 `check embed3` 的真实向量验收，以及升级前后 MinerU DP3 的两组有限联合负载试跑；样本与限制见[验证](validation.md)。
 
 Qwen 与两种 Embed 的 `start`、`restart`、`stop`、`status`、`logs`、`download`、`verify`、`config`、`check` 均分别指定 `model`、`embed` 或 `embed3`。不带组名和 `all` 是 `model` 的兼容入口，不会同时操作其他项目。修改所选 Embed 配置后使用对应的 `restart`；此操作会中断在途 Embed 请求。
 

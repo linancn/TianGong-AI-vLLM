@@ -12,7 +12,7 @@ Chat / 图片 / 工具客户端 ──可选 Bearer──> Qwen Docker vLLM :773
                                 各自只读模型目录与缓存卷
 ```
 
-Qwen 服务负责 tokenizer、模型原生 chat template、量化内核、KV cache、批处理和 OpenAI-compatible API。Embed 服务负责文本向量与检索提示词处理：四卡模板装载四个 BF16 副本，三卡模板装载三个。三卡模板已在三张 RTX PRO 6000 Blackwell 上与 Unstructure Serve 的 MinerU DP3 完成短时联合试跑；现场 MinerU 为 4.0.5/vLLM 0.21。无需额外应用层、Redis、数据库或 PM2；Docker Compose 管理各个独立模型服务，Docker 负责退出恢复和日志轮转。
+Qwen 服务负责 tokenizer、模型原生 chat template、量化内核、KV cache、批处理和 OpenAI-compatible API。Embed 服务负责文本向量与检索提示词处理：四卡模板装载四个 BF16 副本，三卡模板装载三个。三卡模板已在三张 RTX PRO 6000 Blackwell 上与 Unstructure Serve 的 MinerU DP3 完成短时联合试跑，先后覆盖 MinerU 4.0.5/vLLM 0.21 与 4.0.7/vLLM 0.28；各次样本的范围见[验证](validation.md)。无需额外应用层、Redis、数据库或 PM2；Docker Compose 管理各个独立模型服务，Docker 负责退出恢复和日志轮转。
 
 ## 文件与数据
 

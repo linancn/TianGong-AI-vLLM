@@ -1,6 +1,6 @@
 # 多模型与多机器部署模板设计
 
-本文是多模型实例架构方案。现有真实验收基线包括：Qwen3.8-Flash-Next-NVFP4 在四张 RTX PRO 6000 Blackwell Max-Q 96 GB 上运行 TP4 + EP4；Nemotron-3-Embed-8B-BF16 在四张 RTX 5000 Ada 32 GiB 上运行 DP4；Nemotron Embed 在三张 RTX PRO 6000 Blackwell Max-Q 95.6 GiB 上运行 DP3，并与独立 Unstructure Serve 的 MinerU DP3 完成有限联合试跑。三卡现场使用私有 legacy NVIDIA GPU Compose 覆盖，MinerU 为 4.0.5/vLLM 0.21，因此与四卡 Ada 的软件组合不同。其他 GPU 型号、显存容量、DP1/DP2 及新增模型都需要单独验证，不能因为配置可生成就标记为可用。
+本文是多模型实例架构方案。现有真实验收基线包括：Qwen3.8-Flash-Next-NVFP4 在四张 RTX PRO 6000 Blackwell Max-Q 96 GB 上运行 TP4 + EP4；Nemotron-3-Embed-8B-BF16 在四张 RTX 5000 Ada 32 GiB 上运行 DP4；Nemotron Embed 在三张 RTX PRO 6000 Blackwell Max-Q 95.6 GiB 上运行 DP3，并与独立 Unstructure Serve 的 MinerU DP3 完成有限联合试跑。三卡现场使用私有 legacy NVIDIA GPU Compose 覆盖，MinerU 从 4.0.5/vLLM 0.21 更新至 4.0.7/vLLM 0.28 后又完成一组有限联合样本。其他 GPU 型号、显存容量、DP1/DP2 及新增模型都需要单独验证，不能因为配置可生成就标记为可用。
 
 ## 目标与边界
 
@@ -24,13 +24,13 @@
 | --- | --- | --- |
 | `qwen38-nvfp4-patched` | `blackwell-tp4-ep4` | `model`；四张 RTX PRO 6000 Blackwell Max-Q 96 GB 已验收，使用固定镜像、补丁、模型清单和专属推理验收 |
 | `nemotron3-embed8b-bf16-vllm025` | `ada-dp4` | `embed`；四张 RTX 5000 Ada 32 GiB 已验收，使用固定 vLLM 0.25 镜像、模型清单和向量验收 |
-| `nemotron3-embed8b-bf16-vllm025` | `blackwell-dp3` | `embed3`；三张 RTX PRO 6000 Blackwell Max-Q 已完成真实向量 API 和旧版 MinerU DP3 的短时联合试跑；现场使用私有 legacy GPU 覆盖，公开 CDI 配置仍待该宿主验证 |
+| `nemotron3-embed8b-bf16-vllm025` | `blackwell-dp3` | `embed3`；三张 RTX PRO 6000 Blackwell Max-Q 已完成真实向量 API，以及升级前后 MinerU DP3 的两组短时联合试跑；现场使用私有 legacy GPU 覆盖，公开 CDI 配置仍待该宿主验证 |
 
 针对现有机器，硬件清单可归纳成三类，避免按主机 IP 复制公共模板：
 
 | 硬件类 | 可登记的模型拓扑 | 当前状态 |
 | --- | --- | --- |
-| `blackwell-6000x3` | Nemotron Embed DP3 + 独立的 MinerU DP3 | 已完成有限共卡试跑；现场 MinerU 为 4.0.5/vLLM 0.21，使用私有 GPU 覆盖；本仓库不在三卡机部署 Qwen |
+| `blackwell-6000x3` | Nemotron Embed DP3 + 独立的 MinerU DP3 | MinerU 4.0.5 与升级后的 4.0.7/vLLM 0.28 均完成有限共卡试跑；当前固定每 rank 3 GiB KV，Embed 使用私有 GPU 覆盖；本仓库不在三卡机部署 Qwen |
 | `blackwell-6000x4` | Qwen TP4 + EP4 | 已在该型号四卡机器验收；不同主机仍使用独立私有实例和容量检查 |
 | `ada-5000x4` | Nemotron Embed DP4 + TP1 | 已在该型号四卡机器验收，并与独立 MinerU 服务完成有限联合负载试验 |
 
