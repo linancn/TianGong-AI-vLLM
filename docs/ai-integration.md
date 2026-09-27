@@ -36,7 +36,7 @@ Qwen 主要接口：`GET /v1/models`、`POST /v1/chat/completions`。使用模�
 
 ## Nemotron Embed 向量接口
 
-Embed 是独立服务，默认仅在本机监听 `http://127.0.0.1:7731`。模型名默认 `nv-community/Nemotron-3-Embed-8B-BF16`，以 `EMBED_SERVED_MODEL_NAME` 和该服务 `/v1/models` 为准。默认无需鉴权；仅当私有配置中 `EMBED_API_KEY` 非空时，附加 `Authorization: Bearer <EMBED_API_KEY>`。它与 Qwen 的地址、key 和生命周期各自独立。
+Embed 是独立服务，三卡和四卡模板均默认仅在本机监听 `http://127.0.0.1:7731`；局域网调用须在私有配置中绑定所选主机的局域网 IP。模型名默认 `nv-community/Nemotron-3-Embed-8B-BF16`，以所选模板的 `EMBED_SERVED_MODEL_NAME` 或 `EMBED3_SERVED_MODEL_NAME` 和服务 `/v1/models` 为准。默认无需鉴权；仅当私有配置中对应的 `EMBED_API_KEY` 或 `EMBED3_API_KEY` 非空时，附加该服务的 Bearer key。它与 Qwen 的地址、key 和生命周期各自独立。
 
 检索使用 `POST /v2/embed`，查询和待检索文档分别请求。`input_type` 为 `query` 或 `document`，服务按模型自带提示词处理原始文本；客户端无需再手动加 `query: ` 或 `passage: ` 前缀。示例请求：
 
@@ -46,8 +46,8 @@ curl --fail-with-body http://127.0.0.1:7731/v2/embed \
   -d '{"model":"nv-community/Nemotron-3-Embed-8B-BF16","input_type":"query","texts":["什么是张量并行？"],"embedding_types":["float"],"truncate":"END"}'
 ```
 
-建立索引时将 `input_type` 改为 `document`，`texts` 传文档片段。返回向量位于 `embeddings.float`，每条 4096 维且经 L2 归一化，可用点积比较相关度。默认服务上限为 4096 token，不能把模型原生 32768 token 能力视为已部署上限；业务文档应按实际长度分片并验证截断策略。变更维度或截断方式会影响已建索引的一致性，须与查询端保持同一模型和处理方式。上述字段及提示词行为见 [NVIDIA 模型说明](https://huggingface.co/nvidia/Nemotron-3-Embed-8B-BF16/blob/main/README.md)和 [vLLM Embed 文档](https://docs.vllm.ai/en/latest/models/pooling_models/embed/)。
+建立索引时将 `input_type` 改为 `document`，`texts` 传文档片段。返回向量位于 `embeddings.float`，每条 4096 维且经 L2 归一化，可用点积比较相关度。两个模板的默认 `max_model_len` 均为 32768 token，包含服务按 `input_type` 添加的提示词 token；单副本每次调度的合计 token 上限也为 32768，因此一个满长输入可能占满该次调度的 token 额度。`MAX_NUM_SEQS=4` 不表示可在同一副本一次处理四条满长输入。需要确认完整输入未截断时使用 `truncate=NONE` 并检查响应的 `meta.billed_units.input_tokens`；业务文档仍须按实际长度分片，超限不能依赖静默截断。变更维度或截断方式会影响已建索引的一致性，须与查询端保持同一模型和处理方式。上述字段及提示词行为见 [NVIDIA 模型说明](https://huggingface.co/nvidia/Nemotron-3-Embed-8B-BF16/blob/main/README.md)和 [vLLM Embed 文档](https://docs.vllm.ai/en/v0.25.0/models/pooling_models/embed/)。
 
-`deploy/manage.sh check embed` 验证模型身份、4096 维、归一化及一个查询对两篇文档的检索顺序。该短样本不能证明特定业务数据的召回率、长文本质量或四副本吞吐。
+`deploy/manage.sh check embed` 或 `check embed3` 验证模型身份、4096 维、归一化、一个查询对两篇文档的检索顺序，以及与配置长度相符的无截断满长输入。合成满长输入只验证接口和长度边界，不能证明特定业务数据的召回率、长文本语义质量或三/四副本吞吐。
 
 可编辑请求见 `examples/embed.http`。

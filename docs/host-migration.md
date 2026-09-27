@@ -92,7 +92,7 @@ sha256sum output/transfer/embed-docker.tar > output/transfer/embed-image.sha256
 
 复制模型目录与上述两个归档文件后，在目标机检查归档 SHA256，`docker image load -i output/transfer/embed-docker.tar`，并对照源机记录的镜像架构、配置与层信息。按目标机创建私有 `.env`，执行 `./deploy/manage.sh verify embed` 与 `./deploy/manage.sh config embed`，再执行 `./deploy/manage.sh start-loaded embed`、`./deploy/manage.sh check embed`。使用非默认 `EMBED_IMAGE` 时，导出和导入必须使用同一标签。不要把源机 `.env` 或启动显存检查值直接复制到目标机；按目标 GPU 容量、MinerU 等同卡进程及端口归属重新填写 `EMBED_GPU_MEMORY_UTILIZATION`。Qwen 与四卡 Embed 是两个 Compose 项目，迁移或回滚一项时不操作另一项。
 
-三卡 `embed3` 使用同一 `deploy/embed/model-manifest.json`、同一模型目录及固定 vLLM 0.25 镜像摘要；其 Compose 项目 `tiangong-embed3`、缓存卷和默认本机端口 7732 独立。镜像传输及完整性检查可沿用上例；目标机私有配置须填写 `EMBED3_GPU_0..EMBED3_GPU_2`、`EMBED3_GPU_MEMORY_UTILIZATION` 并核对 `EMBED3_IMAGE` 与导入标签一致。若本机运行四卡 `embed`，先等待其请求收敛并停止该服务，再执行：
+三卡 `embed3` 使用同一 `deploy/embed/model-manifest.json`、同一模型目录及固定 vLLM 0.25 镜像摘要；其 Compose 项目 `tiangong-embed3` 和缓存卷独立，默认本机端口与四卡模板同为 7731，两者在同一主机互斥。镜像传输及完整性检查可沿用上例；目标机私有配置须填写 `EMBED3_GPU_0..EMBED3_GPU_2`、`EMBED3_GPU_MEMORY_UTILIZATION`，按目标显存核对 32768 token 请求的峰值，并核对 `EMBED3_IMAGE` 与导入标签一致。若本机运行四卡 `embed`，先等待其请求收敛并停止该服务，再执行：
 
 ```bash
 ./deploy/manage.sh verify embed3

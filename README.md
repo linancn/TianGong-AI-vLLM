@@ -52,7 +52,7 @@ cp -n .env.example .env
 ./deploy/manage.sh check embed
 ```
 
-三卡 Embed 选择 `embed3`，配置独立的 `EMBED3_*` 值；默认只监听本机 `http://127.0.0.1:7732`。其 `download/pull/config/start/check` 操作与上例同形，将 `embed` 换成 `embed3` 即可。四卡 Embed 默认只监听本机 `http://127.0.0.1:7731`。两种 Embed 入口使用相同模型清单和固定镜像，但缓存、Compose 项目独立；同一主机上只启动其中一种。查询和文档向量请求使用 `/v2/embed`，细节见[AI 接入](docs/ai-integration.md)。启动 Embed 不会启动 Qwen，反之亦然。
+三卡 Embed 选择 `embed3`，配置独立的 `EMBED3_*` 值；与四卡 Embed 一样，默认只监听本机 `http://127.0.0.1:7731`。局域网访问须在私有配置中将所选模板的 `*_HOST` 设为该主机的局域网 IP。其 `download/pull/config/start/check` 操作与上例同形，将 `embed` 换成 `embed3` 即可。两种 Embed 入口使用相同模型清单和固定镜像，但缓存、Compose 项目独立；同一主机上只启动其中一种。两种模板均支持 32768 token 输入上限，实际显存余量按每台机器验收。查询和文档向量请求使用 `/v2/embed`，细节见[AI 接入](docs/ai-integration.md)。启动 Embed 不会启动 Qwen，反之亦然。
 
 | 入口 | 用途 |
 | --- | --- |

@@ -45,9 +45,9 @@ bash -n deploy/manage.sh deploy/vllm/serve.sh
 ./deploy/manage.sh check embed
 ```
 
-三卡入口将上述命令的组名换为 `embed3`，并先停止同一主机上的四卡 `embed`。`check embed` 与 `check embed3` 均经真实 HTTP 校验 `/health`、`/v1/models` 的模型身份，并分别以 `input_type=query` 与 `input_type=document` 调用 `/v2/embed`。它们检查向量数量、每条 4096 维、数值有限、L2 范数接近 1，以及相关文档分数高于不相关文档。配置非空 `EMBED_API_KEY` 或 `EMBED3_API_KEY` 时，还检查不带 key 的模型查询返回 401。结果保存在私有 `output/validation/`，四卡与三卡的结果分别带 `embed` 或 `embed3` 标识；失败返回非零，不能以健康状态代替。
+三卡入口将上述命令的组名换为 `embed3`，并先停止同一主机上的四卡 `embed`。`check embed` 与 `check embed3` 均经真实 HTTP 校验 `/health`、`/v1/models` 的模型身份与实际 `max_model_len`，并分别以 `input_type=query` 与 `input_type=document` 调用 `/v2/embed`。它们检查向量数量、每条 4096 维、数值有限、L2 范数接近 1，以及相关文档分数高于不相关文档；还会发送一条按当前固定模型提示词构造的 `truncate=NONE` 满长文档输入，检查实际计费 token 数等于配置上限。配置非空 `EMBED_API_KEY` 或 `EMBED3_API_KEY` 时，还检查不带 key 的模型查询返回 401。结果保存在私有 `output/validation/`，四卡与三卡的结果分别带 `embed` 或 `embed3` 标识；失败返回非零，不能以健康状态代替。满长检查会占用显存，运行前须确认同卡负载。
 
-这个两篇短文档样本只能证明接口和基本检索顺序，不能证明生产语料召回率、多语言质量、4096 token 边界、模型原生 32768 token 能力或三/四副本并发容量。上述能力应以实际语料、输入长度和并发单独测试；调整模型、镜像、GPU 拓扑、启动检查阈值或批量参数后重新验收。
+两篇短文档样本只证明接口和基本检索顺序；合成满长输入只证明长度边界及未截断，不能证明生产语料召回率、多语言质量或三/四副本并发容量。上述能力应以实际语料、输入长度和并发单独测试；调整模型、镜像、GPU 拓扑、启动检查阈值或批量参数后重新验收。
 
 ## 共卡验收
 
@@ -67,6 +67,8 @@ bash -n deploy/manage.sh deploy/vllm/serve.sh
 - 较长文本的联合样本：8 页 PDF advanced 解析返回 85 项、耗时 19.28 秒；并发发出的 8 次约 3401 token Embed 请求全部完成。Embed 四个 rank 的成功计数增量依次为 3、2、1、2，MinerU 为 2、5、4、5。按 0.2 秒间隔取得 80 个显存样本，观测到单卡最低空闲 9094 MiB、最高已用 23129 MiB。原始证据保存在私有 `output/validation/20260927T084739876991Z-combined-long-official.json`。
 
 此前独立发出的 8 次约 3401 token 文档向量请求也全部通过，四个 Embed rank 均参与。上述显存数字是采样窗口内的观测值，不是理论峰值；样本不覆盖持续高并发、复杂生产文档或其他显存容量的机器，也不能保证生产最坏负载下不会 OOM。
+
+2026-09-28 将三卡和四卡 Embed 的私有配置都设为 `max_model_len=32768`、`max_num_batched_tokens=32768`、`max_num_seqs=4`，保持 BF16、DP3/DP4 与原有固定镜像。两台均用 `truncate=NONE` 的合成输入实际计费 32768 token 并返回 4096 维向量；三卡约 96 GiB Blackwell 的一次 32754 token 长请求期间，最低观测空闲约 67363 MiB。四卡 32 GiB Ada 与 MinerU 共卡，四条并发满长请求均返回 HTTP 200；又连续发送五条 30004 token 请求、随后并发发送四条 32768 token 请求，均成功。后一次约每 0.25 秒采样，单卡最低空闲为 3505 MiB；同机 Embedding 容器与 MinerU 容器均保持 healthy、重启次数为 0。长请求后各 Embed worker 的驻留显存不一致，连续请求使其他副本的显存占用上升；单卡剩余显存不能用四卡平均值代替。四条 API 请求并发不证明同一副本可在一次调度中容纳四条满长输入。上述 32K 样本没有叠加 MinerU 业务高峰，3505 MiB 不是联合峰值保证；此前 4096 token 配置下的联合负载余量不能沿用到 32K。
 
 ## 验证边界
 

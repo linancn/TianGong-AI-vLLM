@@ -7,7 +7,7 @@ Qwen 四卡、Embed 四卡与 Embed 三卡模板均有真实运行样本。三�
 ```text
 Chat / 图片 / 工具客户端 ──可选 Bearer──> Qwen Docker vLLM :7730 ──> 4 GPU TP + EP
 查询 / 文档检索客户端 ──可选 Bearer──> Embed Docker vLLM :7731 ──> 4 GPU DP（每卡 TP1）
-查询 / 文档检索客户端 ──可选 Bearer──> Embed3 Docker vLLM :7732 ──> 3 GPU DP（每卡 TP1）
+查询 / 文档检索客户端 ──可选 Bearer──> Embed3 Docker vLLM :7731 ──> 3 GPU DP（每卡 TP1）
                                              │
                                 各自只读模型目录与缓存卷
 ```
@@ -29,7 +29,7 @@ Qwen 服务负责 tokenizer、模型原生 chat template、量化内核、KV cac
 
 `deploy/manage.sh` 根据脚本位置定位仓库，不依赖调用方工作目录。`model`、`embed`、`embed3` 分别属于 Compose 项目 `tiangong-vllm`、`tiangong-embed`、`tiangong-embed3`；命令逐个选择服务。`embed` 与 `embed3` 在同一主机上互斥，启动一个之前须停止另一个。`all` 是 `model` 的兼容别名。start 不重建运行中容器；restart 重建以应用新环境和命令；stop 保留磁盘资源。
 
-Qwen GPU ID 由四个 `GPU_0..GPU_3` 配置；张量并行参数须与实际模型拓扑匹配。四卡 Embed 由 `EMBED_GPU_0..EMBED_GPU_3` 选择 GPU、采用 DP4/TP1；三卡 Embed 由 `EMBED3_GPU_0..EMBED3_GPU_2` 选择 GPU、采用 DP3/TP1。变更 GPU 数量需同步调整 Compose 设备列表与并行参数。各容器内部端口为 8000，主机默认映射为 Qwen 7730、四卡 Embed 7731、三卡 Embed 7732；Embed 默认仅本机监听。三卡与四卡 Embed 默认共用只读模型权重和固定镜像，Compose 项目及缓存卷独立。公开 Compose 使用 CDI；目标三卡宿主的 Snap Docker 已生成 CDI 规格，但当前 daemon 未扫描其目录，因此现场使用私有 legacy NVIDIA GPU 覆盖。Embed 与 MinerU 可选用相同 GPU，但须按部署机私有配置核算显存并进行联合负载验收。
+Qwen GPU ID 由四个 `GPU_0..GPU_3` 配置；张量并行参数须与实际模型拓扑匹配。四卡 Embed 由 `EMBED_GPU_0..EMBED_GPU_3` 选择 GPU、采用 DP4/TP1；三卡 Embed 由 `EMBED3_GPU_0..EMBED3_GPU_2` 选择 GPU、采用 DP3/TP1。变更 GPU 数量需同步调整 Compose 设备列表与并行参数。各容器内部端口为 8000，主机默认映射为 Qwen 7730、两种 Embed 均为 7731；两个 Embed 项目在同一主机互斥。Embed 默认仅本机监听，局域网访问须在私有配置中绑定本机局域网 IP。三卡与四卡 Embed 默认共用只读模型权重和固定镜像，Compose 项目及缓存卷独立。公开 Compose 使用 CDI；目标三卡宿主的 Snap Docker 已生成 CDI 规格，但当前 daemon 未扫描其目录，因此现场使用私有 legacy NVIDIA GPU 覆盖。Embed 与 MinerU 可选用相同 GPU，但须按部署机私有配置核算显存并进行联合负载验收。
 
 ## API 合同
 

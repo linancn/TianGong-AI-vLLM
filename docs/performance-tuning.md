@@ -15,9 +15,9 @@
 
 Embed 有四卡 DP4 和三卡 DP3 两种模板，每卡一个 BF16 模型副本，TP1；它们分别提供四个或三个请求吞吐路径，不等同于跨卡切分一个模型。固定清单中的四个 safetensors 权重文件合计约 14.8 GiB，运行时、模型加载、批处理和请求计算仍会另外占用显存。Nemotron Embed 以 encoder-only pooling 运行，不分配生成模型的 KV cache。`EMBED_GPU_MEMORY_UTILIZATION` 或 `EMBED3_GPU_MEMORY_UTILIZATION` 必须按所选模板在每台部署机的私有 `.env` 中填写；当前固定的 vLLM 0.25 用它对启动瞬间的空闲显存做总显存比例检查，不按此比例预留显存或限制运行期进程占用，详见[部署说明](deployment.md)。Qwen 的 `GPU_MEMORY_UTILIZATION=0.85` 仍参与其 KV cache 容量计算，两服务不会自动共驻留。
 
-Embed 模型原生最多 32768 token，两种模板均以 `MAX_MODEL_LEN=4096`、`MAX_NUM_BATCHED_TOKENS=4096`、`MAX_NUM_SEQS=4` 为起点，对应 `EMBED_*` 或 `EMBED3_*` 前缀。增加文本长度或并发时，逐步测量每张选定卡的启动峰值、请求峰值、错误和延迟；只改变限制值并不能保证容量。精度保持 BF16，若改为 FP8 或其他权重，须按新模型和实际语料重新验证向量质量。
+Embed 模型原生最多 32768 token，两种模板均设 `MAX_MODEL_LEN=32768`、`MAX_NUM_BATCHED_TOKENS=32768`、`MAX_NUM_SEQS=4`，对应 `EMBED_*` 或 `EMBED3_*` 前缀。单批 token 上限是每副本一次调度的合计值，单条满长请求即可用尽；`MAX_NUM_SEQS=4` 只约束可调度序列数，不保证四条满长请求同时执行。32 GiB Ada 共卡环境在多轮满长请求后曾测得单卡最低 3505 MiB 空闲；约 96 GiB Blackwell 三卡环境余量更大，但提高单批上限到例如 65536 前仍需实测两条满长请求及 MinerU 共同峰值。精度保持 BF16，若改为 FP8 或其他权重，须按新模型和实际语料重新验证向量质量。
 
-与 MinerU 等服务共卡时，先检查每个 GPU 上已有进程的权重、KV cache、计算峰值及剩余空间，再为 Embed 设置启动检查阈值并留运行期显存余量。Embed 请求越长、批量和并发越大，峰值计算显存可能越高；降低 `EMBED_GPU_MEMORY_UTILIZATION` 或 `EMBED3_GPU_MEMORY_UTILIZATION` 不会自动缩小这些分配。单项服务各自验收通过后，还须在共同负载下复验显存峰值、OOM、响应延迟和业务质量。具体机器的阈值与测量保存在私有配置及证据中，不写入共享模板。检索合同和验证边界见[AI 接入](ai-integration.md)与[验证](validation.md)。
+与 MinerU 等服务共卡时，先检查每个 GPU 上已有进程的权重、KV cache、计算峰值及剩余空间，再为 Embed 设置启动检查阈值并留运行期显存余量。Embed 请求越长、批量和并发越大，峰值计算显存可能越高；降低 `EMBED_GPU_MEMORY_UTILIZATION` 或 `EMBED3_GPU_MEMORY_UTILIZATION` 不会自动缩小这些分配。多副本请求可不均匀地落到各卡，长输入后各 worker 保留的显存也可能不同；逐卡记录最低空闲量，不能把其他卡的空闲显存合并成单请求余量。单项服务各自验收通过后，还须在共同负载下复验显存峰值、OOM、响应延迟和业务质量。具体机器的阈值与测量保存在私有配置及证据中，不写入共享模板。检索合同和验证边界见[AI 接入](ai-integration.md)与[验证](validation.md)。
 
 2026-09-27 的四卡 Ada 试运行使用私有阈值 0.62：一个 8 页 PDF 解析与 8 次约 3401 token 的 Embed 请求并发，0.2 秒间隔的 80 个样本中，最低空闲 9094 MiB、最高已用 23129 MiB。`0.62` 只影响启动检查；运行中的空闲显存可以低于该比例对应的容量。此记录描述当次样本，持续高并发和生产最坏负载仍需另外验证；完整请求及各 rank 结果见[验证](validation.md)。
 

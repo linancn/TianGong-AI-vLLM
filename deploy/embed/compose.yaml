@@ -35,9 +35,9 @@ services:
       - --gpu-memory-utilization
       - ${EMBED_GPU_MEMORY_UTILIZATION:?Set per-host EMBED_GPU_MEMORY_UTILIZATION in .env}
       - --max-model-len
-      - ${EMBED_MAX_MODEL_LEN:-4096}
+      - ${EMBED_MAX_MODEL_LEN:-32768}
       - --max-num-batched-tokens
-      - ${EMBED_MAX_NUM_BATCHED_TOKENS:-4096}
+      - ${EMBED_MAX_NUM_BATCHED_TOKENS:-32768}
       - --max-num-seqs
       - ${EMBED_MAX_NUM_SEQS:-4}
     devices:
