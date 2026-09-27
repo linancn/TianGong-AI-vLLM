@@ -1,0 +1,31 @@
+# VS Code REST Client: Embed defaults to localhost with no API key.
+# If EMBED_API_KEY is configured, add Authorization: Bearer <key>.
+@baseUrl = http://127.0.0.1:7731
+@model = nv-community/Nemotron-3-Embed-8B-BF16
+
+### Model identity
+GET {{baseUrl}}/v1/models
+
+### Query vector
+POST {{baseUrl}}/v2/embed
+Content-Type: application/json
+
+{
+  "model": "{{model}}",
+  "input_type": "query",
+  "texts": ["什么是张量并行？"],
+  "embedding_types": ["float"],
+  "truncate": "END"
+}
+
+### Document vectors for indexing
+POST {{baseUrl}}/v2/embed
+Content-Type: application/json
+
+{
+  "model": "{{model}}",
+  "input_type": "document",
+  "texts": ["张量并行将一次模型计算分配给多张显卡。", "数据并行在多张显卡上运行独立模型副本。"],
+  "embedding_types": ["float"],
+  "truncate": "END"
+}

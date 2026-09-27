@@ -1,0 +1,58 @@
+name: tiangong-embed3
+services:
+  embed:
+    image: ${EMBED3_IMAGE:-tiangong-embed:vllm0.25.0}
+    restart: unless-stopped
+    init: true
+    shm_size: 8gb
+    stop_grace_period: 120s
+    ports:
+      - "${EMBED3_HOST:-127.0.0.1}:${EMBED3_PORT:-7732}:8000"
+    environment:
+      VLLM_API_KEY: ${EMBED3_API_KEY:-}
+      HF_HUB_OFFLINE: "1"
+      OMP_NUM_THREADS: "8"
+    volumes:
+      - ${EMBED3_MODEL_DIR:-./models/Nemotron-3-Embed-8B-BF16}:/model:ro
+      - embed-cache:/root/.cache
+    entrypoint: ["vllm", "serve"]
+    command:
+      - /model
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --served-model-name
+      - ${EMBED3_SERVED_MODEL_NAME:-nv-community/Nemotron-3-Embed-8B-BF16}
+      - --runner
+      - pooling
+      - --dtype
+      - bfloat16
+      - --data-parallel-size
+      - "3"
+      - --tensor-parallel-size
+      - "1"
+      - --gpu-memory-utilization
+      - ${EMBED3_GPU_MEMORY_UTILIZATION:?Set per-host EMBED3_GPU_MEMORY_UTILIZATION in .env}
+      - --max-model-len
+      - ${EMBED3_MAX_MODEL_LEN:-4096}
+      - --max-num-batched-tokens
+      - ${EMBED3_MAX_NUM_BATCHED_TOKENS:-4096}
+      - --max-num-seqs
+      - ${EMBED3_MAX_NUM_SEQS:-4}
+    devices:
+      - nvidia.com/gpu=${EMBED3_GPU_0:-0}
+      - nvidia.com/gpu=${EMBED3_GPU_1:-1}
+      - nvidia.com/gpu=${EMBED3_GPU_2:-2}
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10m
+    logging:
+      driver: json-file
+      options: {max-size: "20m", max-file: "3"}
+
+volumes:
+  embed-cache:

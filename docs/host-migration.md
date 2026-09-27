@@ -1,6 +1,6 @@
 # 复用模型与镜像迁移到其他机器
 
-程序通过 GitHub `main` 更新；大模型和已验证的 Docker 镜像可通过局域网复制，不必在目标机重新下载。命令除特别标注外均以各自仓库根目录为工作目录。真实主机地址、传输记录和回滚材料保存在私有 `output/`，不写入公共配置。
+程序通过 GitHub `main` 更新；大模型和已验证的 Docker 镜像可通过局域网复制，不必在目标机重新下载。以下主流程针对 Qwen `model` 服务；四卡与三卡 Embed 的独立迁移边界见文末。命令除特别标注外均以各自仓库根目录为工作目录。真实主机地址、传输记录和回滚材料保存在私有 `output/`，不写入公共配置。
 
 ## 先核对目标机
 
@@ -79,3 +79,26 @@ docker image load -i output/transfer/qwen38-docker.tar
 ## 回滚边界
 
 回滚材料仅供该项目恢复，不能用全局 `pm2 resurrect` 影响其他应用。切换失败时先停止新容器，确认端口/GPU 释放，再按保留的旧配置与环境恢复对应进程。验收前不删除唯一旧权重或唯一私有配置。
+
+## Embed 独立迁移
+
+Embed 的模型清单为 `deploy/embed/model-manifest.json`，默认目录为 `models/Nemotron-3-Embed-8B-BF16/`。源机先经 `./deploy/manage.sh pull embed` 从固定摘要拉取并标记本地镜像；以下示例使用 `.env.example` 中的默认 `EMBED_IMAGE` 标签：
+
+```bash
+docker image inspect tiangong-embed:vllm0.25.0 --format '{{.Id}} {{.Architecture}}'
+docker image save --output output/transfer/embed-docker.tar tiangong-embed:vllm0.25.0
+sha256sum output/transfer/embed-docker.tar > output/transfer/embed-image.sha256
+```
+
+复制模型目录与上述两个归档文件后，在目标机检查归档 SHA256，`docker image load -i output/transfer/embed-docker.tar`，并对照源机记录的镜像架构、配置与层信息。按目标机创建私有 `.env`，执行 `./deploy/manage.sh verify embed` 与 `./deploy/manage.sh config embed`，再执行 `./deploy/manage.sh start-loaded embed`、`./deploy/manage.sh check embed`。使用非默认 `EMBED_IMAGE` 时，导出和导入必须使用同一标签。不要把源机 `.env` 或启动显存检查值直接复制到目标机；按目标 GPU 容量、MinerU 等同卡进程及端口归属重新填写 `EMBED_GPU_MEMORY_UTILIZATION`。Qwen 与四卡 Embed 是两个 Compose 项目，迁移或回滚一项时不操作另一项。
+
+三卡 `embed3` 使用同一 `deploy/embed/model-manifest.json`、同一模型目录及固定 vLLM 0.25 镜像摘要；其 Compose 项目 `tiangong-embed3`、缓存卷和默认本机端口 7732 独立。镜像传输及完整性检查可沿用上例；目标机私有配置须填写 `EMBED3_GPU_0..EMBED3_GPU_2`、`EMBED3_GPU_MEMORY_UTILIZATION` 并核对 `EMBED3_IMAGE` 与导入标签一致。若本机运行四卡 `embed`，先等待其请求收敛并停止该服务，再执行：
+
+```bash
+./deploy/manage.sh verify embed3
+./deploy/manage.sh config embed3
+./deploy/manage.sh start-loaded embed3
+./deploy/manage.sh check embed3
+```
+
+三卡 RTX PRO 6000 Blackwell 与 Unstructure Serve 的 MinerU DP3 已完成有限联合试跑，样本边界见[验证](validation.md)。该宿主的 Snap Docker 缺少 CDI，现场使用被忽略的 `output/instances/embed3.compose.yaml` 私有 legacy NVIDIA GPU 覆盖；统一入口在该文件存在时为 `embed3` 附加覆盖，默认仍为公开 CDI Compose。迁移时须核对新宿主的 GPU 运行时，不复制旧宿主的私有覆盖作为通用配置。每台新部署机仍需发起代表性共同负载，记录显存峰值、错误和延迟；四卡 Ada 或三卡 Blackwell 的短时结果均不能代替新主机验收。两种 Embed 在同一主机上互斥，迁移或回滚只操作明确选中的项目。

@@ -1,0 +1,25 @@
+{
+  "model_id": "nv-community/Nemotron-3-Embed-8B-BF16",
+  "revision": "67d5952a94a54590f36184f59f04a1fdb974996e",
+  "files": [
+    {"path": ".gitattributes", "size": 2139, "sha256": "5d73dbd604fe31798b7312504c231cf71c5ba673366eb0d1757fcfde7317ee93"},
+    {"path": "1_Pooling/config.json", "size": 298, "sha256": "d742ebb19220beff3a54db52f8f65db6a078b51238ccd3deb8b80dc03684056c"},
+    {"path": "config.json", "size": 1120, "sha256": "477b576bb187d03a936e0136a54fc4835adf86483ce9361d5f1d87373fe51968"},
+    {"path": "config_sentence_transformers.json", "size": 261, "sha256": "dc2bc223baa9e5eedd8593d1d4230210681001e7dec73ac53d89697df97079ee"},
+    {"path": "configuration.json", "size": 77, "sha256": "007c616ed9187f4f3d6096ed2d55cece33c3f48866dbd7bc6afefcb9645a37c1"},
+    {"path": "CONTRIBUTING.md", "size": 2511, "sha256": "bd0b6e3e1be8b2d9443f907bd44b24d0eabaf37cf66558cadb83818a7dcec78c"},
+    {"path": "LICENSE", "size": 2796, "sha256": "5ae76a0d16eef67e28c81bfdb0b3c8687d14e9b57094090151e7541aac457ae9"},
+    {"path": "model-00001-of-00004.safetensors", "size": 4966645872, "sha256": "9f76c1359913d8bd47a00b84fa00e078369beed6eee4eec8bcd9662b59f79257"},
+    {"path": "model-00002-of-00004.safetensors", "size": 4932506104, "sha256": "3b6a31ecd38827c15c86645477f3384d2389940adac6c73d5ffbd1fd924bf4bc"},
+    {"path": "model-00003-of-00004.safetensors", "size": 4932506112, "sha256": "46321d661b89b96ec19f62aa526561c9b39b4f2847168ef617737429da4901c2"},
+    {"path": "model-00004-of-00004.safetensors", "size": 1073741960, "sha256": "eb9b7f0e415cc4fb6b744cdcf45f03a623d7e9a1da625a7cab2b32323658dccc"},
+    {"path": "model.safetensors.index.json", "size": 23530, "sha256": "7351665437207bfe7e295286ad2ab93a3a8439629a8513502df1a4379972276c"},
+    {"path": "modules.json", "size": 350, "sha256": "21ddb3037a55ebf4549eb5c1dc44c3f28f10b56ec7f1335c92fd90e5b30d88ac"},
+    {"path": "NOTICE", "size": 1381, "sha256": "02eeb3df9416340b544efc9ae11aa022be2966936ca6c32712fcf1b6f765b75e"},
+    {"path": "README.md", "size": 36098, "sha256": "242e2ec0874c87ecd31558a8ef7b29e5a0e28a830f117132886290add30c1300"},
+    {"path": "sentence_bert_config.json", "size": 56, "sha256": "0b1d25d4d13c72c255a7eaaf8921ca481c4cd61ad894e7209c52dc5e1ac3f3bd"},
+    {"path": "THIRD_PARTY_NOTICES.md", "size": 24773, "sha256": "309735912e02e1c79ead9693958d23ed40795aa56b3004bb619bdbb868c8dd67"},
+    {"path": "tokenizer.json", "size": 17077678, "sha256": "797410dfb649a5b9ba92bc4fef7dbf4022d00e73de6867c4ac199a8846439421"},
+    {"path": "tokenizer_config.json", "size": 21139, "sha256": "7bbb77c55282bc679b86d21a1b3953ed8d5d63aaf75f10800c20596eab30b980"}
+  ]
+}

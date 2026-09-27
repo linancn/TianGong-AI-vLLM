@@ -11,6 +11,18 @@
 
 模型原生 `max_position_embeddings=262144`，当前不启用 YaRN。256K 为单请求上限，`MAX_NUM_SEQS=16` 不保证 16 个满长请求可同时驻留；容量取决于启动时分配的 KV cache。以下性能数据仍对应 65536 上下文配置。
 
+## Embed 容量与共卡
+
+Embed 有四卡 DP4 和三卡 DP3 两种模板，每卡一个 BF16 模型副本，TP1；它们分别提供四个或三个请求吞吐路径，不等同于跨卡切分一个模型。固定清单中的四个 safetensors 权重文件合计约 14.8 GiB，运行时、模型加载、批处理和请求计算仍会另外占用显存。Nemotron Embed 以 encoder-only pooling 运行，不分配生成模型的 KV cache。`EMBED_GPU_MEMORY_UTILIZATION` 或 `EMBED3_GPU_MEMORY_UTILIZATION` 必须按所选模板在每台部署机的私有 `.env` 中填写；当前固定的 vLLM 0.25 用它对启动瞬间的空闲显存做总显存比例检查，不按此比例预留显存或限制运行期进程占用，详见[部署说明](deployment.md)。Qwen 的 `GPU_MEMORY_UTILIZATION=0.85` 仍参与其 KV cache 容量计算，两服务不会自动共驻留。
+
+Embed 模型原生最多 32768 token，两种模板均以 `MAX_MODEL_LEN=4096`、`MAX_NUM_BATCHED_TOKENS=4096`、`MAX_NUM_SEQS=4` 为起点，对应 `EMBED_*` 或 `EMBED3_*` 前缀。增加文本长度或并发时，逐步测量每张选定卡的启动峰值、请求峰值、错误和延迟；只改变限制值并不能保证容量。精度保持 BF16，若改为 FP8 或其他权重，须按新模型和实际语料重新验证向量质量。
+
+与 MinerU 等服务共卡时，先检查每个 GPU 上已有进程的权重、KV cache、计算峰值及剩余空间，再为 Embed 设置启动检查阈值并留运行期显存余量。Embed 请求越长、批量和并发越大，峰值计算显存可能越高；降低 `EMBED_GPU_MEMORY_UTILIZATION` 或 `EMBED3_GPU_MEMORY_UTILIZATION` 不会自动缩小这些分配。单项服务各自验收通过后，还须在共同负载下复验显存峰值、OOM、响应延迟和业务质量。具体机器的阈值与测量保存在私有配置及证据中，不写入共享模板。检索合同和验证边界见[AI 接入](ai-integration.md)与[验证](validation.md)。
+
+2026-09-27 的四卡 Ada 试运行使用私有阈值 0.62：一个 8 页 PDF 解析与 8 次约 3401 token 的 Embed 请求并发，0.2 秒间隔的 80 个样本中，最低空闲 9094 MiB、最高已用 23129 MiB。`0.62` 只影响启动检查；运行中的空闲显存可以低于该比例对应的容量。此记录描述当次样本，持续高并发和生产最坏负载仍需另外验证；完整请求及各 rank 结果见[验证](validation.md)。
+
+三卡 DP3 模板已在三张 RTX PRO 6000 Blackwell Max-Q（每卡约 95.6 GiB）上与 MinerU DP3 完成一次短时联合试跑。Nemotron BF16 三个 worker 每卡约占 16224 MiB；2 页 PDF advanced 解析与 8 次每次约 20749 字符的 Embed 请求全部通过，8 次向量请求各耗时 0.30～0.70 秒。按 0.25 秒间隔的 16 个显存样本，三张卡的最高已用分别为 30145、30005、31013 MiB，最低空闲分别为 67189、67337、66329 MiB。向量请求设置 `truncate=END`，4096 token 模板可能截断输入；这些数字既不是未截断长上下文性能，也不是持续高并发峰值。现场 MinerU 为 4.0.5/vLLM 0.21，GPU 通过私有 legacy Compose 覆盖映射，不能把该结果套用到其他软件组合或公开 CDI 启动路径。三卡启动检查比例按目标机已有进程占用填写，不沿用四卡私有阈值；完整边界见[验证](validation.md)。
+
 ## 2026-09-18 实测
 
 硬件为 4 × RTX PRO 6000 Blackwell Max-Q 96 GB（SM120），Xeon w5-3425（12 核/24 线程）、约 250 GiB RAM，PCIe 单机无 NVLink。引擎为[固定基础镜像及修复层](dependencies.md)，GPU PLE、自动调优、TP4 + EP4 在各组保持相同。每组使用单独容器启动，先完成真实功能验收。

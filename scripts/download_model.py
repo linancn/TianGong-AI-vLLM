@@ -12,6 +12,25 @@ import subprocess
 from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parents[1]
+MODEL_SPECS = {
+    "model": ("MODEL_DIR", "models/Qwen3.8-Flash-Next-NVFP4", "deploy/vllm/model-manifest.json"),
+    "embed": (
+        "EMBED_MODEL_DIR",
+        "models/Nemotron-3-Embed-8B-BF16",
+        "deploy/embed/model-manifest.json",
+    ),
+    "embed3": (
+        "EMBED3_MODEL_DIR",
+        "models/Nemotron-3-Embed-8B-BF16",
+        "deploy/embed/model-manifest.json",
+    ),
+}
+
+
+def model_directory(model: str, env: dict[str, str]) -> Path:
+    env_key, default_dir, _ = MODEL_SPECS[model]
+    # Match Compose's ${VAR:-default}: an empty private value uses the repo default.
+    return ROOT / (env.get(env_key) or default_dir)
 
 
 def read_env() -> dict[str, str]:
@@ -84,10 +103,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verify-only", action="store_true")
     parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--model", choices=MODEL_SPECS, default="model")
     args = parser.parse_args()
-    directory = ROOT / read_env().get("MODEL_DIR", "models/Qwen3.8-Flash-Next-NVFP4")
+    _, _, manifest_path = MODEL_SPECS[args.model]
+    directory = model_directory(args.model, read_env())
     directory.mkdir(parents=True, exist_ok=True)
-    manifest = json.loads((ROOT / "deploy/vllm/model-manifest.json").read_text())
+    manifest = json.loads((ROOT / manifest_path).read_text())
     with (directory / ".download.lock").open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         with ThreadPoolExecutor(max_workers=args.workers) as pool:

@@ -17,6 +17,21 @@ def entry(data=b"model weights", name="weights.bin"):
     return {"path": name, "size": len(data), "sha256": hashlib.sha256(data).hexdigest()}
 
 
+@pytest.mark.parametrize(
+    ("profile", "expected"),
+    [
+        ("model", "Qwen3.8-Flash-Next-NVFP4"),
+        ("embed", "Nemotron-3-Embed-8B-BF16"),
+        ("embed3", "Nemotron-3-Embed-8B-BF16"),
+    ],
+)
+def test_default_download_directory_is_in_project_models(profile, expected):
+    directory = download.ROOT / "models" / expected
+    assert download.model_directory(profile, {}) == directory
+    env_key = download.MODEL_SPECS[profile][0]
+    assert download.model_directory(profile, {env_key: ""}) == directory
+
+
 def test_verification_rejects_same_size_corruption(tmp_path):
     path = tmp_path / "weights.bin"
     path.write_bytes(b"model weights")
