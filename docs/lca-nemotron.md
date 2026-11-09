@@ -1,6 +1,6 @@
 # LCA-Nemotron-Embed-1B
 
-本服务由 GPUStack 2.2.3 custom backend 托管，每个 deployment 只分配一张 GPU、一个模型进程。多卡容量通过多个独立 deployment 和一个 generic-proxy 路由提供。模型是 `Tiangong-LCA/LCA-Nemotron-Embed-1B`，不可与通用 Nemotron-3-Embed-8B 或已有向量索引互换。
+本服务由 GPUStack custom backend 托管，每个 deployment 只分配一张 GPU、一个模型进程。多卡容量通过多个独立 deployment 和一个 generic-proxy 路由提供。模型是 `Tiangong-LCA/LCA-Nemotron-Embed-1B`，不可与通用 Nemotron-3-Embed-8B 或已有向量索引互换。
 
 ## 固定发布与运行时
 
@@ -17,6 +17,10 @@ bash deploy/lca-nemotron/build.sh /path/to/embedding-model /path/to/linux-uv
 ```
 
 ## GPUStack 部署
+
+当前后端模板使用 `st5.3.0-r2-custom` / 镜像 `tiangong-lca-nemotron:st5.3.0-r2`。GPUStack 2.3 的网关会将 JSON model 改写为选中的 deployment 名，并向后端发送 chunked 请求。r2 通过 `--served-model-name {{model_name}}` 接受这个确切内部别名，保留发布 ID 和固定响应 ID；同时支持有界 chunked JSON。累计 body 仍限制为 1000000 bytes，拒绝冲突的 Content-Length/Transfer-Encoding、无效分块、超长头和 trailers。依赖、权重与数值推理不变。r1 保留用于兼容旧网关的回退，不能直接用于上述请求合同。
+
+客户端仍发送发布模型 ID。网关按已授权路由选择模型并改写 model，所以经网关不能用错误 model 字段证明后端拒绝陌生模型；此负例须直连受限后端验收。`check_lca_nemotron.py --gateway-rewrites-model` 显式验证网关始终返回本路由发布 ID，其他非法输入仍须拒绝；直连验收不传此选项。路由不能被客户端 model 字段用来选择其他服务。
 
 1. 在目标 worker 中挂载专用父目录，例如 `/srv/models/lca-nemotron-embed-1b`，模型位于该目录下以完整 revision 命名的子目录。宿主和 worker 使用相同路径。仅添加此 mount，保留现有私有 worker overlay 的其他配置。
 2. 导入 [backend 模板](../deploy/lca-nemotron/gpustack-backend.json)。导入 [deployment 模板](../deploy/examples/lca-nemotron-gpustack.json) 前替换节点、绝对模型路径和 GPU ID。`--allowed-clients` 必须只包含回环、该 worker IP 和获准的 GPUStack 控制面 IP。

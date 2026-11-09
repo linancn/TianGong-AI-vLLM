@@ -31,10 +31,12 @@ MAX_TEXT = 100_000
 MAX_ITEMS = 32
 
 
-def validate_request(value):
+def validate_request(value, served_model_name=None):
     if not isinstance(value, dict) or set(value) != {"model", "input_type", "input"}:
         raise ValueError("Exactly model, input_type and input are required")
-    if value["model"] != MODEL_ID:
+    if value["model"] != MODEL_ID and (
+        not served_model_name or value["model"] != served_model_name
+    ):
         raise ValueError("Unknown model")
     if value["input_type"] not in ("query", "document"):
         raise ValueError("input_type must be query or document")
@@ -44,6 +46,49 @@ def validate_request(value):
     if any(not isinstance(t, str) or not t.strip() or len(t) > MAX_TEXT for t in texts):
         raise ValueError("Texts must be nonblank strings of at most 100000 characters")
     return texts, value["input_type"]
+
+
+class BodyTooLarge(ValueError):
+    pass
+
+
+def read_body(headers, stream):
+    """Accept the gateway's chunked framing without weakening the body limit."""
+    lengths = headers.get_all("Content-Length", [])
+    encodings = headers.get_all("Transfer-Encoding", [])
+    if encodings:
+        if lengths or len(encodings) != 1 or encodings[0].lower().strip() != "chunked":
+            raise ValueError("Ambiguous or unsupported framing")
+        body = bytearray()
+        for _ in range(10000):
+            line = stream.readline(1025)
+            if len(line) > 1024 or not line.endswith(b"\r\n"):
+                raise ValueError("Invalid chunk header")
+            size_text = line[:-2].split(b";", 1)[0]
+            if not size_text or any(c not in b"0123456789abcdefABCDEF" for c in size_text):
+                raise ValueError("Invalid chunk size")
+            size = int(size_text, 16)
+            if len(body) + size > MAX_BODY:
+                raise BodyTooLarge()
+            if size == 0:
+                # This API does not accept trailers or empty JSON bodies.
+                if stream.readline(3) != b"\r\n" or not body:
+                    raise ValueError("Invalid chunk terminator")
+                return bytes(body)
+            chunk = stream.read(size)
+            if len(chunk) != size or stream.read(2) != b"\r\n":
+                raise ValueError("Incomplete chunk")
+            body.extend(chunk)
+        raise ValueError("Too many chunks")
+    if len(lengths) != 1 or not lengths[0].isascii() or not lengths[0].isdigit():
+        raise ValueError("A single Content-Length is required")
+    size = int(lengths[0])
+    if not 0 < size <= MAX_BODY:
+        raise BodyTooLarge()
+    body = stream.read(size)
+    if len(body) != size:
+        raise ValueError("Incomplete request body")
+    return body
 
 
 def verify_release(model_path, manifest_path):
@@ -329,19 +374,16 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(503, {"error": "Model not ready"})
             return
         try:
-            lengths = self.headers.get_all("Content-Length", [])
-            if self.headers.get("Transfer-Encoding") or len(lengths) != 1:
-                raise ValueError("A single Content-Length is required")
-            size = int(lengths[0])
-            if not 0 < size <= MAX_BODY:
-                self.respond(413, {"error": "Request body limit exceeded"})
-                return
             if self.headers.get_content_type() != "application/json":
                 raise ValueError("Content-Type must be application/json")
-            body = self.rfile.read(size)
-            if len(body) != size:
-                raise ValueError("Incomplete request body")
-            texts, mode = validate_request(json.loads(body))
+            body = read_body(self.headers, self.rfile)
+            texts, mode = validate_request(
+                json.loads(body), getattr(engine.config, "served_model_name", None)
+            )
+        except BodyTooLarge:
+            engine.increment(rejected=1)
+            self.respond(413, {"error": "Request body limit exceeded"})
+            return
         except (ValueError, UnicodeError, OSError):
             engine.increment(rejected=1)
             self.respond(
@@ -365,6 +407,7 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", required=True)
+    parser.add_argument("--served-model-name", help="Exact internal GPUStack deployment alias")
     parser.add_argument(
         "--manifest", default="/opt/lca/tools/config/releases/lca-nemotron-embed-1b.json"
     )

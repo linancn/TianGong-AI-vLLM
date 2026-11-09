@@ -42,6 +42,11 @@ def main():
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--key-stdin", action="store_true")
     parser.add_argument("--benchmark", action="store_true")
+    parser.add_argument(
+        "--gateway-rewrites-model",
+        action="store_true",
+        help="Verify that the authorized gateway route replaces the submitted model name",
+    )
     parser.add_argument("--device", default="cuda:0")
     args = parser.parse_args()
     if args.benchmark and not args.data_dir:
@@ -141,7 +146,6 @@ def main():
     invalid = [
         None,
         {"model": MODEL, "input": ["missing mode"]},
-        {**valid, "model": "wrong"},
         {**valid, "input_type": "other"},
         {**valid, "input": []},
         {**valid, "input": [""]},
@@ -151,6 +155,11 @@ def main():
         {**valid, "dimensions": 1024},
         {**valid, "encoding_format": "base64"},
     ]
+    if args.gateway_rewrites_model:
+        status, value, _ = call({**valid, "model": "wrong"})
+        assert status == 200 and value["model"] == MODEL
+    else:
+        invalid.append({**valid, "model": "wrong"})
     invalid_statuses = [call(payload)[0] for payload in invalid]
     assert all(status == 400 for status in invalid_statuses), invalid_statuses
     oversize_status = call({**valid, "input": ["x" * 99999] * 32})[0]

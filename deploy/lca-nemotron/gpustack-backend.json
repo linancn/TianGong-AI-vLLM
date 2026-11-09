@@ -1,8 +1,14 @@
 {
   "backend_name": "tiangong-lca-nemotron-custom",
   "description": "Published LCA-Nemotron-Embed-1B reference runtime; one GPU per deployment",
-  "default_version": "st5.3.0-r1-custom",
+  "default_version": "st5.3.0-r2-custom",
   "version_configs": {
+    "st5.3.0-r2-custom": {
+      "image_name": "tiangong-lca-nemotron:st5.3.0-r2",
+      "custom_framework": "cuda",
+      "entrypoint": "python /opt/lca/server.py",
+      "run_command": "--model {{model_path}} --host {{worker_ip}} --port {{port}} --served-model-name {{model_name}} --read-only-model-mount"
+    },
     "st5.3.0-r1-custom": {
       "image_name": "tiangong-lca-nemotron:st5.3.0-r1",
       "custom_framework": "cuda",

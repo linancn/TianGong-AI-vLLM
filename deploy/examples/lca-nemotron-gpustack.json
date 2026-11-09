@@ -4,7 +4,7 @@
   "description": "LCA reference runtime, fixed release 6d77edaa; replace node, path and allowed controller before applying",
   "local_path": "/srv/models/lca-nemotron-embed-1b/6d77edaa3b92dd1b7e3dd8a152ea7170a8b581c5",
   "backend": "tiangong-lca-nemotron-custom",
-  "backend_version": "st5.3.0-r1-custom",
+  "backend_version": "st5.3.0-r2-custom",
   "backend_parameters": [
     "--allowed-clients 127.0.0.1",
     "--batch-size=8",

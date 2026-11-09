@@ -1,6 +1,9 @@
 """HTTP/queue contract tests; numerical GPU acceptance is check_lca_nemotron.py."""
 
 import importlib.util
+import http.client
+import io
+from email.message import Message
 import json
 from pathlib import Path
 import queue
@@ -96,6 +99,45 @@ def test_mixed_modes_and_batch_order(endpoint):
         assert status == 200 and result["input_type"] == mode
         assert [item["index"] for item in result["data"]] == [0, 1]
         assert all(len(item["embedding"]) == 2048 for item in result["data"])
+
+
+def test_gateway_chunked_deployment_alias(endpoint, engine):
+    engine.config.served_model_name = "lca-deployment-gpu0"
+    body = json.dumps({**valid(), "model": engine.config.served_model_name}).encode()
+    connection = http.client.HTTPConnection("127.0.0.1", endpoint[1].server_port, timeout=5)
+    connection.request(
+        "POST",
+        "/v1/embeddings",
+        [body[:20], body[20:]],
+        {"Content-Type": "application/json"},
+        encode_chunked=True,
+    )
+    response = connection.getresponse()
+    assert response.status == 200
+    assert json.load(response)["model"] == server.MODEL_ID
+    connection.close()
+    assert request(endpoint[0], valid())[0] == 200
+    assert request(endpoint[0], {**valid(), "model": "other-deployment"})[0] == 400
+
+
+@pytest.mark.parametrize(
+    "extra,body,error",
+    [
+        ({"Content-Length": "1"}, b"1\r\nx\r\n0\r\n\r\n", ValueError),
+        ({}, b"-1\r\n", ValueError),
+        ({}, b"2\r\nx", ValueError),
+        ({}, b"1\r\nx!\n0\r\n\r\n", ValueError),
+        ({}, b"1\r\nx\r\n0\r\nTrailer: no\r\n\r\n", ValueError),
+        ({}, b"f4241\r\n", server.BodyTooLarge),
+        ({"Transfer-Encoding": "gzip, chunked"}, b"", ValueError),
+    ],
+)
+def test_chunked_framing_limits(extra, body, error):
+    headers = Message()
+    for key, value in {"Transfer-Encoding": "chunked", **extra}.items():
+        headers[key] = value
+    with pytest.raises(error):
+        server.read_body(headers, io.BytesIO(body))
 
 
 def test_readiness_allowlist_and_content_type(endpoint, engine):
