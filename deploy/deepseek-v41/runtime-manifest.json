@@ -1,0 +1,13 @@
+{
+  "vllm_version": "0.33.0",
+  "validated_image_id": "sha256:58ab4c3fe0fd7ef9bec27412771f44d780c61652474b81dc471e67f0e9029df7",
+  "base_image": "vllm/vllm-openai:v0.33.0@sha256:d825baf9ce4b1b6bfc5ecc7b79880c7e6748c65a72d697ce3d47607aafa84c6e",
+  "amd64_manifest": "sha256:91ee972ab751fb7180bc71c175865e36b091686600dca783d52b2511399810b3",
+  "engram_upstream_pr": "https://github.com/vllm-project/vllm/pull/61530",
+  "engram_upstream_commit": "c2e1c43648cfe7db4da42dac931561658c9f69ab",
+  "engram_original_sha256": "720923ccd796dfdeab4b396eeeea79cd4c11a9dcd2e6ef8d57c0390fa4cf7ab2",
+  "patch_sha256": "6f78854ef6bcd1798cc7a1e2bb047f6e6888fab0fa72af547e2abd25b17d9536",
+  "sm120_upstream_pr": "https://github.com/vllm-project/vllm/pull/65356",
+  "sm120_upstream_commit": "f5129016ec14ddbd7b5bdf6b42dbf697d0166caf",
+  "check_script": "scripts/check_deepseek_v41.py"
+}

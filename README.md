@@ -50,6 +50,8 @@ Laya 按每卡一个完整模型副本运行，统一入口默认 `http://127.0.
 
 [H3 NVFP4 音视频服务](docs/h3.md) 固定完整模型组件、ModelScope 镜像与离线运行环境；已通过 GPUStack 单卡 480P/768P 带音频生成验收，使用参考图/视频输入。
 
+[DeepSeek V4.1 Flash NVFP4](docs/deepseek-v41.md) 使用固定权重清单、SM120 兼容镜像和 GPUStack 单节点八卡部署，保留原生 1,048,576 token 上下文；提供文本、图片、工具调用与长输入验收脚本。
+
 ## 文档与开发
 
 | 文档 | 内容 |

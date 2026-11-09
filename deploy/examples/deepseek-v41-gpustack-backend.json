@@ -1,0 +1,43 @@
+{
+  "backend_name": "tiangong-deepseek-v41-custom",
+  "description": "DeepSeek V4.1 Flash 1017 NVFP4 with pinned Engram and SM120 support, TP8 and DSpark",
+  "health_check_path": "/health",
+  "default_version": "vllm033-sm120-r2",
+  "version_configs": {
+    "vllm033-sm120-r2": {
+      "image_name": "tiangong-vllm:deepseek-v41-v033-sm120-r2",
+      "custom_framework": "cuda",
+      "entrypoint": "vllm serve",
+      "run_command": "{{model_path}} --host {{worker_ip}} --port {{port}} --served-model-name {{model_name}} deepseek-v41"
+    }
+  },
+  "default_env": {
+    "GPUSTACK_MODEL_RUNTIME_SHM_SIZE_GIB": "32",
+    "VLLM_ENGINE_READY_TIMEOUT_S": "7200",
+    "HF_HUB_OFFLINE": "1",
+    "OMP_NUM_THREADS": "2",
+    "XDG_CACHE_HOME": "/var/lib/gpustack/cache/deepseek-v41/.cache",
+    "VLLM_CACHE_ROOT": "/var/lib/gpustack/cache/deepseek-v41/.cache/vllm",
+    "VLLM_ALLREDUCE_USE_FLASHINFER_PCIE_IPC": "0"
+  },
+  "default_backend_param": [
+    "--tensor-parallel-size=8",
+    "--enable-expert-parallel",
+    "--distributed-executor-backend=mp",
+    "--tokenizer-mode=deepseek_v41",
+    "--attention-config={\"backend\":\"FLASHINFER_MLA_SPARSE_DSV41\",\"indexer_kv_dtype\":\"fp8\"}",
+    "--kv-cache-dtype=fp8",
+    "--block-size=64",
+    "--engram-config={\"cpu_offload\":false}",
+    "--gpu-memory-utilization=0.90",
+    "--max-model-len=1048576",
+    "--max-num-seqs=8",
+    "--max-num-batched-tokens=4096",
+    "--enable-prefix-caching",
+    "--speculative-config={\"method\":\"dspark\",\"num_speculative_tokens\":5,\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\":\"block\",\"enable_adaptive_verification\":false}",
+    "--reasoning-parser=deepseek_v41",
+    "--enable-auto-tool-choice",
+    "--tool-call-parser=deepseek_v41",
+    "--limit-mm-per-prompt={\"image\":4,\"video\":0}"
+  ]
+}

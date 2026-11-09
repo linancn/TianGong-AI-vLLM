@@ -44,6 +44,8 @@
 
 ## 已有模型约束
 
+- DeepSeek-V4.1-Flash-1017-NVFP4：固定 ModelScope 清单与 vLLM 0.33.0 MXFP4 Engram 回移补丁，见 docs/deepseek-v41.md。GPUStack 单节点八卡单副本，优先保留 1,048,576 token 上下文；不能用健康检查或短输入证明满长容量。真实验收脚本为 scripts/check_deepseek_v41.py，覆盖文本、工具、图片、reasoning、SSE、长上下文召回和明确标注缓存条件的吞吐。SM120 不套用 SM100 MegaMoE 参数，不开启已暂停的 PCIe IPC 实验。
+
 - H3 NVFP4：见 docs/h3.md；固定 FastH3 Omni NVFP4 QAD 和原版视频/音频 VAE 清单，ModelScope 镜像仍按原 HF 散列验证。已通过 SM120 单卡、GPUStack 鉴权路由的 5 秒 480P/768P 音视频验收；默认 36 层解码器、逐层卸载、运行并发 1。快速解码器、长视频与压力测试尚未验收。专用脚本与固定依赖镜像位于 scripts/download_hf_snapshot.py、scripts/check_h3.py、deploy/h3，GPUStack 模板位于 deploy/examples/h3-gpustack-*.json，不加入原生 all；不能把 Ref2VA 描述成无需参考的纯文生视频。
 
 - LCA-Nemotron-Embed-1B：固定发布版 Sentence Transformers 参考路径，GPUStack 每卡一个独立 custom deployment，统一鉴权 generic-proxy 路由。显式 query/document、512/2048 tokens、2048 维；不接受 dimensions 或 encoding_format。构建、资源限制、固定依赖和完整 HTTP/reference benchmark 验收见 docs/lca-nemotron.md；实现 deploy/lca-nemotron，check_script 为 scripts/check_lca_nemotron.py。不得沿用通用 Nemotron 的 vLLM 镜像或 API 合同。

@@ -1,0 +1,2 @@
+# Unified diff context lines retain the mandatory leading space on blank lines.
+deploy/deepseek-v41/engram-mxfp4.patch whitespace=-blank-at-eol
